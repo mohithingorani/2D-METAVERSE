@@ -11,3 +11,9 @@ export const SignInSchema = z.object({
     username : z.string(),
     password:z.string(),
 })
+
+export const SpaceSchema = z.object({
+    name:z.string(),
+    dimensions: z.string().regex(/^[0-9]{1,4}x[0-9]{1,4}$/),
+    mapId : z.string().optional()
+})

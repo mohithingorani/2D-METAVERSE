@@ -28,7 +28,7 @@ model Space {
   name   String
   width  Int
   height Int
-  thumbnail String
+  thumbnail String?
   creatorId String
   creater User @relation(fields: [creatorId],references: [id])
   elements SpaceElement[]
