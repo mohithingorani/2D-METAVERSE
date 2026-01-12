@@ -1,16 +1,19 @@
-import express, { Router } from "express"
-import dotenv from "dotenv"
-import authRouter from "./routes/authentication";
+import express, { Router } from "express";
+import dotenv from "dotenv";
+import router from "./routes/v1";
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-
-app.use("/api/v1",authRouter);
+app.use("/api/v1", router);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT,()=>{
-    console.log("App started at PORT",PORT);
-})
+function startServer() {
+  app.listen(PORT, () => {
+    console.log("App started at PORT", PORT);
+  });
+}
+
+startServer();
