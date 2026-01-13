@@ -5,16 +5,23 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev":"node dist/index.js",
-    "build":"tsc -b"
+    "dev": "node dist/index.js",
+    "build": "tsc -b"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/ws": "^8.18.1",
+    "axios": "^1.13.2",
+    "jsonwebtoken": "^9.0.3",
     "tsc": "^2.0.4",
     "typescript": "^5.9.3",
     "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.8"
   }
 }
