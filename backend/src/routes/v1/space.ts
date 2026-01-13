@@ -8,8 +8,9 @@ import {
 import { prisma } from "../../lib/prisma";
 
 export const spaceRouter = Router();
+spaceRouter.use(userMiddleware);
 
-spaceRouter.post("/", userMiddleware, async (req, res) => {
+spaceRouter.post("/", async (req, res) => {
   const parsed = SpaceSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
@@ -70,7 +71,7 @@ spaceRouter.post("/", userMiddleware, async (req, res) => {
   res.json({ spaceId: space.id });
 });
 
-spaceRouter.delete("/element", userMiddleware, async (req, res) => {
+spaceRouter.delete("/element", async (req, res) => {
   const parsedData = DeleteElementSchema.safeParse(req.body);
   if (!parsedData.success) {
     console.log("Validation Error");
@@ -106,7 +107,7 @@ spaceRouter.delete("/element", userMiddleware, async (req, res) => {
   });
 });
 
-spaceRouter.delete("/:spaceId", userMiddleware, async (req, res) => {
+spaceRouter.delete("/:spaceId", async (req, res) => {
   const spaceId = req.params.spaceId as string;
   const space = await prisma.space.findUnique({
     where: {
@@ -138,7 +139,7 @@ spaceRouter.delete("/:spaceId", userMiddleware, async (req, res) => {
   });
 });
 
-spaceRouter.get("/all", userMiddleware, async (req, res) => {
+spaceRouter.get("/all", async (req, res) => {
   const spaces = await prisma.space.findMany({
     where: {
       creatorId: req.userId,
@@ -155,7 +156,7 @@ spaceRouter.get("/all", userMiddleware, async (req, res) => {
   });
 });
 
-spaceRouter.post("/element", userMiddleware, async (req, res) => {
+spaceRouter.post("/element", async (req, res) => {
   const parsedData = AddSpaceElementSchema.safeParse(req.body);
   if (!parsedData.success) {
     res.status(400).json({ message: "Validation Error" });
@@ -213,7 +214,7 @@ spaceRouter.post("/element", userMiddleware, async (req, res) => {
   }
 });
 
-spaceRouter.get("/:spaceId", userMiddleware, async (req, res) => {
+spaceRouter.get("/:spaceId", async (req, res) => {
   const spaceId = req.params.spaceId as string;
   const space = await prisma.space.findUnique({
     where: {

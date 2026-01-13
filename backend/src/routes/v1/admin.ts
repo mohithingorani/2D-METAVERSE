@@ -31,7 +31,6 @@ adminRouter.post("/element", async (req, res) => {
       message: "Internal server error",
       error,
     });
-    ``;
   }
 });
 
@@ -51,7 +50,6 @@ adminRouter.put("/element/:elementId", async (req, res) => {
   });
 
   res.status(200).json({
-    message:"Element Updated"
-  })
-  
+    message: "Element Updated",
+  });
 });
