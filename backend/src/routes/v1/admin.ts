@@ -56,6 +56,7 @@ adminRouter.put("/element/:elementId", async (req, res) => {
 
   res.status(200).json({
     message: "Element Updated",
+    id:element.id
   });
 });
 
