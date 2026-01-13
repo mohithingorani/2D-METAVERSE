@@ -41,3 +41,20 @@ export const UpdateElementSchema = z.object({
     imageUrl:z.string()
 })
 
+export const CreateAvatarSchema = z.object({
+    imageUrl:z.string(),
+    name:z.string()
+})
+
+export const CreateMapSchema = z.object({
+    width:z.number(),
+    height:z.number(),
+    name:z.string(),
+    thumbnail:z.string(),
+    defaultMapElements:z.array(z.object({
+        elementId:z.string(),
+        x:z.number(),
+        y:z.number()
+    }))
+    
+})
