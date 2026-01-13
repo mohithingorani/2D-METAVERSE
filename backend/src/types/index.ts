@@ -21,3 +21,12 @@ export const SpaceSchema = z.object({
 export const DeleteElementSchema = z.object({
     id:z.string()
 })
+
+export const AddSpaceElementSchema = z.object({
+    id : z.string(),
+    elementId : z.string(),
+    spaceId : z.string(),
+    x : z.number(),
+    y : z.number()
+})
+
