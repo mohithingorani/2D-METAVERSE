@@ -10,6 +10,8 @@ import { prisma } from "../../lib/prisma";
 export const spaceRouter = Router();
 spaceRouter.use(userMiddleware);
 
+
+
 spaceRouter.post("/", async (req, res) => {
   const parsed = SpaceSchema.safeParse(req.body);
   if (!parsed.success) {

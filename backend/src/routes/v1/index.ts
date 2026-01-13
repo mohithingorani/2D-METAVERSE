@@ -6,6 +6,7 @@ import { compare, hash } from "../../scrypt";
 import jwt from "jsonwebtoken";
 import { spaceRouter } from "./space";
 import { adminRouter } from "./admin";
+import { wsRouter } from "./ws";
 
 const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 
@@ -87,4 +88,5 @@ router.post("/signin", async (req, res) => {
 
 router.use("/space",spaceRouter);
 router.use("/admin",adminRouter);
+router.use("/ws",wsRouter);
 export default router;
