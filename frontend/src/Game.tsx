@@ -4,13 +4,60 @@ const Arena = () => {
   const canvasRef = useRef<any>(null);
   const wsRef = useRef<any>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
-  const [users, setUsers] = useState(new Map());
+  const [users, setUsers] = useState<Map<string, any>>(new Map());
+  const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
   const [params, setParams] = useState({ token: "", spaceId: "" });
+  const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     containerRef.current?.focus();
+  }, []);
+
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  const currentUserRef = useRef(currentUser);
+  const usersRef = useRef(users);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
+
+  useEffect(() => {
+    let id: number;
+
+    const animate = () => {
+      const cu = currentUserRef.current;
+
+      setRenderPos((prev) => ({
+        x: lerp(prev.x, cu.x, 0.5),
+        y: lerp(prev.y, cu.y, 0.5),
+      }));
+
+      setRenderUsers((prev) => {
+        const next = new Map(prev);
+
+        usersRef.current.forEach((user, id) => {
+          const p = next.get(id) || user;
+          next.set(id, {
+            userId: user.userId,
+            x: lerp(p.x, user.x, 0.5),
+            y: lerp(p.y, user.y, 0.5),
+          });
+        });
+
+        return next;
+      });
+
+      id = requestAnimationFrame(animate);
+    };
+
+    animate();
+    return () => cancelAnimationFrame(id);
   }, []);
 
   // Initialize WebSocket connection and handle URL params
@@ -47,6 +94,7 @@ const Arena = () => {
       case "space-joined":
         // Initialize current user position and other users
         console.log("set");
+
         console.log({
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
@@ -56,6 +104,10 @@ const Arena = () => {
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
           userId: message.payload.userId,
+        });
+        setRenderPos({
+          x: message.payload.spawn.x,
+          y: message.payload.spawn.y,
         });
 
         // Initialize other users from the payload
@@ -77,17 +129,15 @@ const Arena = () => {
           return newUsers;
         });
         break;
-
       case "movement":
         setUsers((prev) => {
-          const newUsers = new Map(prev);
-          const user = newUsers.get(message.payload.userId);
-          if (user) {
-            user.x = message.payload.x;
-            user.y = message.payload.y;
-            newUsers.set(message.payload.userId, user);
-          }
-          return newUsers;
+          const next = new Map(prev);
+          next.set(message.payload.userId, {
+            userId: message.payload.userId,
+            x: message.payload.x,
+            y: message.payload.y,
+          });
+          return next;
         });
         break;
 
@@ -111,29 +161,28 @@ const Arena = () => {
   };
 
   // Handle user movement
- const handleMove = (newX: number, newY: number) => {
-  setCurrentUser((prev: any) => ({
-    ...prev,
-    x: newX,
-    y: newY,
-  }));
+  const handleMove = (newX: number, newY: number) => {
+    setCurrentUser((prev: any) => ({
+      ...prev,
+      x: newX,
+      y: newY,
+    }));
 
-  if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-    return;
-  }
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
 
-  wsRef.current.send(
-    JSON.stringify({
-      type: "move",
-      payload: {
-        x: newX,
-        y: newY,
-        userId: currentUser.userId,
-      },
-    })
-  );
-};
-
+    wsRef.current.send(
+      JSON.stringify({
+        type: "move",
+        payload: {
+          x: newX,
+          y: newY,
+          userId: currentUser.userId,
+        },
+      })
+    );
+  };
 
   // Draw the arena
   useEffect(() => {
@@ -168,32 +217,33 @@ const Arena = () => {
       console.log(currentUser);
       ctx.beginPath();
       ctx.fillStyle = "#FF6B6B";
-      const scale = 50;
+      const scale = 20;
 
-      ctx.arc(currentUser.x * scale, currentUser.y * scale, 15, 0, Math.PI * 2);
+      ctx.arc(renderPos.x * scale, renderPos.y * scale, 12, 0, Math.PI * 2);
+
       ctx.fill();
       ctx.fillStyle = "#000";
       ctx.font = "14px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("You", currentUser.x * 50, currentUser.y * 50 + 40);
+      ctx.fillText("You", renderPos.x * scale, renderPos.y * scale + 20);
     }
 
+    const scale = 20;
     // Draw other users
-    users.forEach((user) => {
+    renderUsers.forEach((user) => {
       if (user.x === undefined) return;
-
       console.log("drawing other user");
       console.log(user);
       ctx.beginPath();
       ctx.fillStyle = "#4ECDC4";
-      ctx.arc(user.x * 50, user.y * 50, 20, 0, Math.PI * 2);
+      ctx.arc(user.x * scale, user.y * scale, 12, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#000";
       ctx.font = "14px Arial";
       ctx.textAlign = "center";
-      ctx.fillText(`User ${user.userId}`, user.x * 50, user.y * 50 + 40);
+      ctx.fillText(`User ${user.userId}`, user.x * scale, user.y * scale + 20);
     });
-  }, [currentUser, users]);
+  }, [renderUsers, renderPos]);
 
   const lastMove = useRef(0);
 
@@ -201,7 +251,7 @@ const Arena = () => {
     e.preventDefault(); // 🔥 THIS LINE FIXES IT
 
     const now = Date.now();
-    if (now - lastMove.current < 100) return;
+    if (now - lastMove.current < 16) return;
     lastMove.current = now;
 
     const { x, y } = currentUser;
@@ -239,7 +289,12 @@ const Arena = () => {
         </p>
       </div>
       <div className="border rounded-lg overflow-hidden">
-        <canvas ref={canvasRef} width={1000} height={1000} className="bg-white" />
+        <canvas
+          ref={canvasRef}
+          width={1000}
+          height={1000}
+          className="bg-white"
+        />
       </div>
       <p className="mt-2 text-sm text-gray-500">
         Use arrow keys to move your avatar
