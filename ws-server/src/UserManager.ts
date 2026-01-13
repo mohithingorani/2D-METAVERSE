@@ -62,6 +62,8 @@ export class User {
             return;
           }
 
+          
+
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
           this.x = Math.floor(Math.random() * 15);
