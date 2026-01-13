@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma";
 import { SignInSchema, SignUpSchema } from "../../types";
 import { compare, hash } from "../../scrypt";
 import jwt from "jsonwebtoken";
+import { spaceRouter } from "./space";
 
 const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 
@@ -82,5 +83,7 @@ router.post("/signin", async (req, res) => {
     });
   }
 });
+
+router.use("/space",spaceRouter);
 
 export default router;
