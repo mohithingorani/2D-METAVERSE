@@ -26,22 +26,24 @@ export class RoomManager {
     console.log("Removed User");
   }
 
-  public addUser(spaceId:string,user:User){
-    if(!this.rooms.has(spaceId)){
-        return;
+  public addUser(spaceId: string, user: User) {
+    if (!this.rooms.has(spaceId)) {
+      this.rooms.set(spaceId, []); // ✅ create room
     }
-    this.rooms.set(spaceId,[...(this.rooms.get(spaceId) ?? []),user])
+
+    this.rooms.set(spaceId, [...(this.rooms.get(spaceId) ?? []), user]);
+
+    console.log("Users in room:", this.rooms.get(spaceId)?.length);
   }
 
-  public broadcast(message:any,user:User,spaceId:string){
-    if(!this.rooms.has(spaceId)){
-        return;
+  public broadcast(message: any, user: User, spaceId: string) {
+    if (!this.rooms.has(spaceId)) {
+      return;
     }
-    this.rooms.get(spaceId)?.forEach((u)=>{
-        if(u.id!=user.id){
-            u.send(message);
-        }
-    })
+    this.rooms.get(spaceId)?.forEach((u) => {
+      if (u.id != user.id) {
+        u.send(message);
+      }
+    });
   }
-
 }

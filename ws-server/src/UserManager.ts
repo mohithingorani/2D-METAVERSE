@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
-import dotenv from "dotenv"
-import axios from "axios"
+import dotenv from "dotenv";
+import axios from "axios";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RoomManager } from "./RoomManager";
 
@@ -18,9 +18,9 @@ function generateRandomString(num: number) {
 const BACKEND_URL = process.env.BACKEND_URL as string;
 const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 type SpaceType = {
-    width:number,
-    height:number
-}
+  width: number;
+  height: number;
+};
 
 export class User {
   public id: string;
@@ -45,46 +45,49 @@ export class User {
   initHandlers() {
     this.ws.on("message", async (data) => {
       const parsedData = JSON.parse(data.toString());
+      console.log("ROOM STATE", RoomManager.getInstance().rooms);
+
       console.log(JSON.stringify(parsedData));
       switch (parsedData.type) {
         case "join":
           const spaceId = parsedData.payload.spaceId;
           const token = parsedData.payload.token;
-          const userId = (jwt.verify(token, JWT_PASSWORD) as JwtPayload).userId;
-          if (!userId) {
+          try {
+            const decoded = jwt.verify(token, JWT_PASSWORD) as JwtPayload;
+            this.userId = decoded.userId;
+            console.log("JWT OK:", decoded);
+          } catch (e) {
+            console.log("JWT FAILED", e);
             this.ws.close();
             return;
-          }     
+          }
 
-          this.userId = userId;
-        //   const space = await axios.get<SpaceType>(
-        //     `${BACKEND_URL}/api/v1/ws/space?spaceId=${spaceId}`
-        //   );
-        //   if (space.status != 200 || !space) {
-        //     this.ws.close();
-        //     return;
-        //   }
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
-          this.x = Math.floor(Math.random() * 400);
-          this.y = Math.floor(Math.random() * 400);
+          this.x = Math.floor(Math.random() * 15);
+          this.y = Math.floor(Math.random() * 25);
           console.log("reached 2");
           this.send({
             type: "space-joined",
             payload: {
+              userId: this.userId,
               spawn: {
                 x: this.x,
                 y: this.y,
               },
-              users: RoomManager.getInstance()
-                .rooms.get(spaceId)
-                ?.filter((u) => {
-                  u.id != this.id;
-                })
-                .map((u) => ({ id: u.id })),
+              users:
+                RoomManager.getInstance()
+                  .rooms.get(spaceId)
+                  ?.filter((u) => u.id !== this.id)
+                  .map((u) => ({
+                    userId: u.userId,
+                    x: u.x,
+                    y: u.y,
+                  })) || [],
             },
           });
-          console.log("reached 3")
+
+          console.log("reached 3");
           RoomManager.getInstance().broadcast(
             {
               type: "user-joined",
@@ -114,6 +117,7 @@ export class User {
               {
                 type: "movement",
                 payload: {
+                  userId: this.userId,
                   x: this.x,
                   y: this.y,
                 },
