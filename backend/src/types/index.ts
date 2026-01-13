@@ -30,3 +30,14 @@ export const AddSpaceElementSchema = z.object({
     y : z.number()
 })
 
+export const CreateElementSchema = z.object({
+    width:z.number(),
+    height:z.number(),
+    static:z.boolean(),
+    imageUrl:z.string()
+})
+
+export const UpdateElementSchema = z.object({
+    imageUrl:z.string()
+})
+
