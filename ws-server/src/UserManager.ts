@@ -1,7 +1,10 @@
 import { WebSocket } from "ws";
+import dotenv from "dotenv"
+import axios from "axios"
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RoomManager } from "./RoomManager";
-import { BACKEND_URL, JWT_PASSWORD } from "./config";
+
+dotenv.config();
 function generateRandomString(num: number) {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -12,6 +15,8 @@ function generateRandomString(num: number) {
   return result;
 }
 
+const BACKEND_URL = process.env.BACKEND_URL as string;
+const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 type SpaceType = {
     width:number,
     height:number
@@ -30,17 +35,17 @@ export class User {
     this.ws = ws;
     this.x = 0;
     this.y = 0;
+    this.initHandlers();
   }
 
   send(message: any) {
     this.ws.send(JSON.stringify(message));
   }
 
-  
-
   initHandlers() {
     this.ws.on("message", async (data) => {
       const parsedData = JSON.parse(data.toString());
+      console.log(JSON.stringify(parsedData));
       switch (parsedData.type) {
         case "join":
           const spaceId = parsedData.payload.spaceId;
@@ -49,20 +54,21 @@ export class User {
           if (!userId) {
             this.ws.close();
             return;
-          }
+          }     
 
           this.userId = userId;
-          const space = await axios.get<SpaceType>(
-            `${BACKEND_URL}/api/v1/ws/space?spaceId=${spaceId}`
-          );
-          if (space.status != 200 || !space) {
-            this.ws.close();
-            return;
-          }
+        //   const space = await axios.get<SpaceType>(
+        //     `${BACKEND_URL}/api/v1/ws/space?spaceId=${spaceId}`
+        //   );
+        //   if (space.status != 200 || !space) {
+        //     this.ws.close();
+        //     return;
+        //   }
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
-          this.x = Math.floor(Math.random() * space.data.width);
-          this.y = Math.floor(Math.random() * space.data.height);
+          this.x = Math.floor(Math.random() * 400);
+          this.y = Math.floor(Math.random() * 400);
+          console.log("reached 2");
           this.send({
             type: "space-joined",
             payload: {
@@ -78,6 +84,7 @@ export class User {
                 .map((u) => ({ id: u.id })),
             },
           });
+          console.log("reached 3")
           RoomManager.getInstance().broadcast(
             {
               type: "user-joined",
@@ -96,6 +103,7 @@ export class User {
           const moveY = parsedData.payload.y;
           const xDisplacement = Math.abs(this.x - moveX);
           const yDisplacement = Math.abs(this.y - moveY);
+          console.log("reached 4");
           if (
             (xDisplacement == 1 && yDisplacement == 0) ||
             (xDisplacement == 0 && yDisplacement == 1)

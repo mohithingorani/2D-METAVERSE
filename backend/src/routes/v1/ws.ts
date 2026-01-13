@@ -4,6 +4,8 @@ import { prisma } from "../../lib/prisma";
 export const wsRouter = Router();
 
 wsRouter.get("/space/:spaceId",async(req,res)=>{
+
+    console.log("Got ws request on backend");
     try{
 
     const space = await prisma.space.findFirst({
@@ -17,6 +19,7 @@ wsRouter.get("/space/:spaceId",async(req,res)=>{
         })
         return
     }
+    console.log("send space");
     res.status(200).json({
         space
     })

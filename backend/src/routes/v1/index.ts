@@ -8,6 +8,8 @@ import { spaceRouter } from "./space";
 import { adminRouter } from "./admin";
 import { wsRouter } from "./ws";
 
+
+
 const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 
 router.post("/signup", async (req, res) => {
