@@ -212,3 +212,40 @@ spaceRouter.post("/element", userMiddleware, async (req, res) => {
     });
   }
 });
+
+spaceRouter.get("/:spaceId", userMiddleware, async (req, res) => {
+  const spaceId = req.params.spaceId as string;
+  const space = await prisma.space.findUnique({
+    where: {
+      id: spaceId,
+    },
+    include: {
+      elements: {
+        include: {
+          element: true,
+        },
+      },
+    },
+  });
+  if (!space) {
+    res.status(400).json({
+      message: "Space not found",
+    });
+    return;
+  }
+  if (space.id != req.userId) {
+    res.status(200).json({
+      dimensions: `${space.width}x${space.height}`,
+      elements: space.elements.map((e) => ({
+        element: {
+          id: e.id,
+          width: e.element.width,
+          height: e.element.height,
+          static: e.element.static,
+        },
+        x: e.x,
+        y: e.y,
+      })),
+    });
+  }
+});
