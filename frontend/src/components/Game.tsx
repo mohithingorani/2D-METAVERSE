@@ -63,12 +63,13 @@ const Arena = () => {
   // Initialize WebSocket connection and handle URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token") || "";
+    // const token = urlParams.get("token") || "";
+    const token = localStorage.getItem("token");
     const spaceId = urlParams.get("spaceId") || "";
-    setParams({ token, spaceId });
+    token && setParams({ token, spaceId });
 
     // Initialize WebSocket
-    wsRef.current = new WebSocket("ws://localhost:8080"); // Replace with your WS_URL
+    wsRef.current = new WebSocket("ws://localhost:8080"); 
 
     wsRef.current.onopen = () => {
       // Join the space once connected
