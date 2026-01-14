@@ -17,10 +17,7 @@ function generateRandomString(num: number) {
 
 const BACKEND_URL = process.env.BACKEND_URL as string;
 const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
-type SpaceType = {
-  width: number;
-  height: number;
-};
+
 
 export class User {
   public id: string;
@@ -62,13 +59,13 @@ export class User {
             return;
           }
 
-          
-
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
-          this.x = Math.floor(Math.random() * 15);
-          this.y = Math.floor(Math.random() * 25);
+          this.x = 4
+          this.y = 4
           console.log("reached 2");
+
+          // sending current user along with all users on join with message name as space-joined
           this.send({
             type: "space-joined",
             payload: {
@@ -109,9 +106,11 @@ export class User {
           const xDisplacement = Math.abs(this.x - moveX);
           const yDisplacement = Math.abs(this.y - moveY);
           console.log("reached 4");
+          const isInside = moveX >= 0 && moveY >= 0 && moveX < 35 && moveY < 25;
           if (
-            (xDisplacement == 1 && yDisplacement == 0) ||
-            (xDisplacement == 0 && yDisplacement == 1)
+            isInside &&
+            ((xDisplacement == 1 && yDisplacement == 0) ||
+              (xDisplacement == 0 && yDisplacement == 1))
           ) {
             this.x = moveX;
             this.y = moveY;

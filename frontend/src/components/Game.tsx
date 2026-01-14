@@ -1,42 +1,58 @@
 import { useEffect, useRef, useState } from "react";
+import { lerp } from "../utility/lerp";
+import { clamp } from "../utility/clamp";
+
+
+interface UserInterface {
+  userId:string,
+  x:number,
+  y:number
+}
+
 
 const Arena = () => {
   const canvasRef = useRef<any>(null);
   const wsRef = useRef<any>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
-  const [users, setUsers] = useState<Map<string, any>>(new Map());
+  const [users, setUsers] = useState<Map<string, UserInterface>>(new Map());
   const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
   const [params, setParams] = useState({ token: "", spaceId: "" });
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    containerRef.current?.focus();
-  }, []);
 
-  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
   const currentUserRef = useRef(currentUser);
   const usersRef = useRef(users);
 
+
+  // whenever current user changes, we manually copy it to ref
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
 
+  // whenever all users changes, we manually copy it to ref
   useEffect(() => {
     usersRef.current = users;
   }, [users]);
+
+
+
 
   useEffect(() => {
     let id: number;
 
     const animate = () => {
+
+      // copy currentuser from its ref
       const cu = currentUserRef.current;
 
       setRenderPos((prev) => ({
         x: lerp(prev.x, cu.x, 0.5),
         y: lerp(prev.y, cu.y, 0.5),
       }));
+
 
       setRenderUsers((prev) => {
         const next = new Map(prev);
@@ -63,7 +79,6 @@ const Arena = () => {
   // Initialize WebSocket connection and handle URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    // const token = urlParams.get("token") || "";
     const token = localStorage.getItem("token");
     const spaceId = urlParams.get("spaceId") || "";
     token && setParams({ token, spaceId });
@@ -84,6 +99,7 @@ const Arena = () => {
       );
     };
 
+    // whenever client ws recieves a message
     wsRef.current.onmessage = (event: any) => {
       const message = JSON.parse(event.data);
       handleWebSocketMessage(message);
@@ -112,8 +128,10 @@ const Arena = () => {
         });
 
         // Initialize other users from the payload
+        // map stores like this userid:{userId,x,y}
         const userMap = new Map();
-        message.payload.users.forEach((user: any) => {
+        const users:UserInterface[] = message.payload.users;
+        users.forEach((user: UserInterface) => {
           userMap.set(user.userId, user);
         });
         setUsers(userMap);
@@ -161,8 +179,12 @@ const Arena = () => {
     }
   };
 
+  
+
   // Handle user movement
   const handleMove = (newX: number, newY: number) => {
+  newX = clamp(newX, 0, 38);
+  newY = clamp(newY, 0, 24);
     setCurrentUser((prev: any) => ({
       ...prev,
       x: newX,
@@ -172,6 +194,7 @@ const Arena = () => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       return;
     }
+    
 
     wsRef.current.send(
       JSON.stringify({
@@ -212,6 +235,7 @@ const Arena = () => {
 
     console.log("before curerntusert");
     console.log(currentUser);
+    const radius = 15;
     // Draw current user
     if (currentUser && currentUser.x !== undefined) {
       console.log("drawing myself");
@@ -220,13 +244,13 @@ const Arena = () => {
       ctx.fillStyle = "#FF6B6B";
       const scale = 20;
 
-      ctx.arc(renderPos.x * scale, renderPos.y * scale, 12, 0, Math.PI * 2);
+      ctx.arc(renderPos.x * scale, renderPos.y * scale, radius, 0, Math.PI * 2);
 
       ctx.fill();
       ctx.fillStyle = "#000";
       ctx.font = "14px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("You", renderPos.x * scale, renderPos.y * scale + 20);
+      ctx.fillText("You", renderPos.x * scale, renderPos.y * scale -30);
     }
 
     const scale = 20;
@@ -237,20 +261,21 @@ const Arena = () => {
       console.log(user);
       ctx.beginPath();
       ctx.fillStyle = "#4ECDC4";
-      ctx.arc(user.x * scale, user.y * scale, 12, 0, Math.PI * 2);
+      ctx.arc(user.x * scale, user.y * scale, radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#000";
       ctx.font = "14px Arial";
       ctx.textAlign = "center";
-      ctx.fillText(`User ${user.userId}`, user.x * scale, user.y * scale + 20);
+      ctx.fillText(`User ${user.userId}`, user.x * scale, user.y * scale -30);
     });
   }, [renderUsers, renderPos]);
 
   const lastMove = useRef(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    e.preventDefault(); // 🔥 THIS LINE FIXES IT
 
+    // throttling, rate limittin - limiting how fast movement can happen
+    // allow movement only once every 16ms
     const now = Date.now();
     if (now - lastMove.current < 16) return;
     lastMove.current = now;
@@ -276,25 +301,25 @@ const Arena = () => {
 
   return (
     <div
-      className="p-4"
+      className="p-8 bg-green-300 "
       ref={containerRef}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <h1 className="text-2xl font-bold mb-4">Arena</h1>
+      <h1 className="text-2xl font-bold mb-4 ">Arena</h1>
       <div className="mb-4">
-        <p className="text-sm text-gray-600">Token: {params.token}</p>
-        <p className="text-sm text-gray-600">Space ID: {params.spaceId}</p>
+        {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
+        <p className="text-xs text-gray-600">Space ID: {params.spaceId}</p>
         <p className="text-sm text-gray-600">
           Connected Users: {users.size + (currentUser ? 1 : 0)}
         </p>
       </div>
-      <div className="border rounded-lg overflow-hidden">
+      <div className=" rounded-lg overflow-hidden">
         <canvas
           ref={canvasRef}
           width={1000}
-          height={1000}
-          className="bg-white"
+          height={500}
+          className="bg-blue-400"
         />
       </div>
       <p className="mt-2 text-sm text-gray-500">
