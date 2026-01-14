@@ -2,13 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { lerp } from "../utility/lerp";
 import { clamp } from "../utility/clamp";
 
-
 interface UserInterface {
-  userId:string,
-  x:number,
-  y:number
+  userId: string;
+  x: number;
+  y: number;
 }
-
 
 const Arena = () => {
   const canvasRef = useRef<any>(null);
@@ -20,12 +18,27 @@ const Arena = () => {
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const bgImgRef = useRef<HTMLImageElement | null>(null);
+  const spriteRef = useRef<HTMLImageElement | null>(null);
+  const TILE_SIZE = 40;
+  const WORLD_WIDTH = 54 * TILE_SIZE;
+  const WORLD_HEIGHT = 30 * TILE_SIZE;
+  const cameraRef = useRef({ x: 0, y: 0 });
 
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/still/still_01.png"; // put sprite in public/
+    spriteRef.current = img;
+  }, []);
 
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/map-final.png";
+    bgImgRef.current = img;
+  }, []);
 
   const currentUserRef = useRef(currentUser);
   const usersRef = useRef(users);
-
 
   // whenever current user changes, we manually copy it to ref
   useEffect(() => {
@@ -37,22 +50,17 @@ const Arena = () => {
     usersRef.current = users;
   }, [users]);
 
-
-
-
   useEffect(() => {
     let id: number;
 
     const animate = () => {
-
       // copy currentuser from its ref
       const cu = currentUserRef.current;
 
       setRenderPos((prev) => ({
-        x: lerp(prev.x, cu.x, 0.5),
-        y: lerp(prev.y, cu.y, 0.5),
+        x: lerp(prev.x, cu.x, 0.25),
+        y: lerp(prev.y, cu.y, 0.25),
       }));
-
 
       setRenderUsers((prev) => {
         const next = new Map(prev);
@@ -61,8 +69,8 @@ const Arena = () => {
           const p = next.get(id) || user;
           next.set(id, {
             userId: user.userId,
-            x: lerp(p.x, user.x, 0.5),
-            y: lerp(p.y, user.y, 0.5),
+            x: lerp(p.x, user.x, 0.25),
+            y: lerp(p.y, user.y, 0.25),
           });
         });
 
@@ -84,7 +92,7 @@ const Arena = () => {
     token && setParams({ token, spaceId });
 
     // Initialize WebSocket
-    wsRef.current = new WebSocket("ws://localhost:8080"); 
+    wsRef.current = new WebSocket("ws://localhost:8080");
 
     wsRef.current.onopen = () => {
       // Join the space once connected
@@ -130,7 +138,7 @@ const Arena = () => {
         // Initialize other users from the payload
         // map stores like this userid:{userId,x,y}
         const userMap = new Map();
-        const users:UserInterface[] = message.payload.users;
+        const users: UserInterface[] = message.payload.users;
         users.forEach((user: UserInterface) => {
           userMap.set(user.userId, user);
         });
@@ -179,12 +187,10 @@ const Arena = () => {
     }
   };
 
-  
-
   // Handle user movement
   const handleMove = (newX: number, newY: number) => {
-  newX = clamp(newX, 0, 38);
-  newY = clamp(newY, 0, 24);
+    newX = clamp(newX, 1, 53);
+    newY = clamp(newY, 1, 29);
     setCurrentUser((prev: any) => ({
       ...prev,
       x: newX,
@@ -194,7 +200,6 @@ const Arena = () => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       return;
     }
-    
 
     wsRef.current.send(
       JSON.stringify({
@@ -207,77 +212,93 @@ const Arena = () => {
       })
     );
   };
-
-  // Draw the arena
+  // Draw arena
   useEffect(() => {
-    console.log("render");
     const canvas = canvasRef.current;
     if (!canvas) return;
-    console.log("below render");
+    const viewWidth = canvas.width;
+    const viewHeight = canvas.height;
 
+    // center camera on player
+    cameraRef.current.x = renderPos.x * TILE_SIZE - viewWidth / 2;
+    cameraRef.current.y = renderPos.y * TILE_SIZE - viewHeight / 2;
+
+    // clamp camera so it doesn't show outside map
+    cameraRef.current.x = clamp(
+      cameraRef.current.x,
+      0,
+      WORLD_WIDTH - viewWidth
+    );
+
+    cameraRef.current.y = clamp(
+      cameraRef.current.y,
+      0,
+      WORLD_HEIGHT - viewHeight
+    );
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
 
-    // Draw grid
-    ctx.strokeStyle = "#eee";
-    for (let i = 0; i < canvas.width; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, canvas.height);
-      ctx.stroke();
-    }
-    for (let i = 0; i < canvas.height; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(canvas.width, i);
-      ctx.stroke();
+    // move world opposite to camera
+    ctx.translate(-cameraRef.current.x, -cameraRef.current.y);
+    const bg = bgImgRef.current;
+    if (bg) {
+      ctx.drawImage(bg, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     }
 
-    console.log("before curerntusert");
-    console.log(currentUser);
-    const radius = 15;
-    // Draw current user
-    if (currentUser && currentUser.x !== undefined) {
-      console.log("drawing myself");
-      console.log(currentUser);
-      ctx.beginPath();
-      ctx.fillStyle = "#FF6B6B";
-      const scale = 20;
+    if (currentUser.x !== undefined) {
+      const sprite = spriteRef.current;
 
-      ctx.arc(renderPos.x * scale, renderPos.y * scale, radius, 0, Math.PI * 2);
+      if (sprite) {
+        const scale = TILE_SIZE;
+        const SIZE = 70;
 
-      ctx.fill();
-      ctx.fillStyle = "#000";
-      ctx.font = "14px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("You", renderPos.x * scale, renderPos.y * scale -30);
+        ctx.drawImage(
+          sprite,
+          renderPos.x * scale - SIZE / 2,
+          renderPos.y * scale - SIZE / 2,
+          SIZE,
+          SIZE
+        );
+
+        ctx.fillStyle = "#000";
+        ctx.textAlign = "center";
+        ctx.fillText("You", renderPos.x * scale, renderPos.y * scale - 24);
+      }
     }
 
-    const scale = 20;
-    // Draw other users
+    // ===== DRAW OTHER USERS =====
     renderUsers.forEach((user) => {
       if (user.x === undefined) return;
-      console.log("drawing other user");
-      console.log(user);
-      ctx.beginPath();
-      ctx.fillStyle = "#4ECDC4";
-      ctx.arc(user.x * scale, user.y * scale, radius, 0, Math.PI * 2);
-      ctx.fill();
+
+      const sprite = spriteRef.current;
+      if (!sprite) return;
+
+      const scale = 20;
+      const SIZE = 32;
+
+      ctx.drawImage(
+        sprite,
+        user.x * scale - SIZE / 2,
+        user.y * scale - SIZE / 2,
+        SIZE,
+        SIZE
+      );
+
       ctx.fillStyle = "#000";
-      ctx.font = "14px Arial";
       ctx.textAlign = "center";
-      ctx.fillText(`User ${user.userId}`, user.x * scale, user.y * scale -30);
+      ctx.fillText(`User ${user.userId}`, user.x * scale, user.y * scale - 24);
     });
+    ctx.restore();
   }, [renderUsers, renderPos]);
 
   const lastMove = useRef(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-
     // throttling, rate limittin - limiting how fast movement can happen
     // allow movement only once every 16ms
     const now = Date.now();
-    if (now - lastMove.current < 16) return;
+    if (now - lastMove.current < 60) return;
     lastMove.current = now;
 
     const { x, y } = currentUser;
@@ -317,8 +338,8 @@ const Arena = () => {
       <div className=" rounded-lg overflow-hidden">
         <canvas
           ref={canvasRef}
-          width={1000}
-          height={500}
+          width={1080}
+          height={603}
           className="bg-blue-400"
         />
       </div>

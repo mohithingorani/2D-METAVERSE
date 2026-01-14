@@ -106,7 +106,7 @@ export class User {
           const xDisplacement = Math.abs(this.x - moveX);
           const yDisplacement = Math.abs(this.y - moveY);
           console.log("reached 4");
-          const isInside = moveX >= 0 && moveY >= 0 && moveX < 35 && moveY < 25;
+          const isInside = moveX >= 1 && moveY >= 1 && moveX < 54 && moveY < 30;
           if (
             isInside &&
             ((xDisplacement == 1 && yDisplacement == 0) ||
