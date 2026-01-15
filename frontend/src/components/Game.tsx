@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { lerp } from "../utility/lerp";
 import { clamp } from "../utility/clamp";
-import {  isNear } from "../utility/distance";
+import { isNear } from "../utility/distance";
 
 interface UserInterface {
   userId: string;
@@ -26,6 +26,7 @@ const Arena = () => {
   const animStateRef = useRef<AnimState>("idle");
   const frameIndexRef = useRef(0);
   const wsReadyRef = useRef(false);
+  const [animationReady, setAnimationReady] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const bgImgRef = useRef<HTMLImageElement | null>(null);
@@ -298,6 +299,7 @@ const Arena = () => {
           right,
         },
       };
+      setAnimationReady(true);
 
       setLoading(false); // ✅ ALL LOADED
     };
@@ -310,7 +312,7 @@ const Arena = () => {
 
   // Draw arena
   useEffect(() => {
-    if (loading) return;
+    if (loading || !animationReady) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const viewWidth = canvas.width;
@@ -378,7 +380,7 @@ const Arena = () => {
       );
     }
 
-    // ===== DRAW OTHER USERS =====
+    // DRAW OTHER USERS
     renderUsers.forEach((user) => {
       if (user.x === undefined) return;
       const frame =
@@ -456,15 +458,22 @@ const Arena = () => {
   //   return () => clearTimeout(t);
   // }, [currentUser.x, currentUser.y]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      usersRef.current.forEach((u) => {
-        if (isNear(currentUserRef.current, u)) console.log("You are near");
-      });
-    }, 2000);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     usersRef.current.forEach((u) => {
+  //       if (isNear(currentUserRef.current, u)) {
+  //         console.log("You are near");
+  //         const screenX = currentUserRef.current.x * TILE_SIZE - cameraRef.current.x;
+  //   const screenY = currentUserRef.cu.y * TILE_SIZE - cameraRef.current.y;
+  //       }
+  //     });
+  //   }, 2000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
+  const nearbyUsers = Array.from(renderUsers.values()).filter(
+    (u) => currentUser?.x && isNear(currentUser, u)
+  );
 
   useEffect(() => {
     containerRef.current?.focus();
@@ -507,14 +516,40 @@ const Arena = () => {
             height={603}
             className="bg-blue-400"
           />
+          {nearbyUsers.map((user) => {
+            const screenX = user.x * TILE_SIZE - cameraRef.current.x;
+            const screenY = user.y * TILE_SIZE - cameraRef.current.y;
+
+            return (
+              <div
+                key={user.userId}
+                className="absolute"
+                style={{
+                  left: screenX,
+                  top: screenY - 40,
+                  transform: "translate(-50%, -100%)",
+                }}
+              >
+                <div className="bg-black/80 text-white text-xs px-2 py-1 rounded font-pixel">
+                  Press Enter to chat
+                </div>
+              </div>
+            );
+          })}
           <div className="absolute text-3xl top-4 left-4 font-pixel px-1 bg-black/40 text-white">
             XY : {currentUser.x}, {currentUser.y}
           </div>
-          {/* <div  className="absolute bottom-4 left-4 font-pixel  max-h-10 bg-black/40">
-            {messages.map((message: string) => {
-              return <div className=" text-white">{message}</div>;
+          <div
+            className={`absolute bottom-4 left-4 font-pixel  max-h-10 bg-black/40`}
+          >
+            {messages.map((message: string, key) => {
+              return (
+                <div key={key} className=" text-white">
+                  {message}
+                </div>
+              );
             })}
-          </div> */}
+          </div>
         </div>
         <p className="mt-2  text-sm text-gray-500">
           Use arrow keys to move your avatar
