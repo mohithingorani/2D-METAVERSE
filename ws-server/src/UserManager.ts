@@ -18,7 +18,6 @@ function generateRandomString(num: number) {
 const BACKEND_URL = process.env.BACKEND_URL as string;
 const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 
-
 export class User {
   public id: string;
   public userId?: string;
@@ -62,9 +61,8 @@ export class User {
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
           this.x = Math.floor(Math.random() * (31 - 24 + 1)) + 24;
-          this.y = Math.floor(Math.random()*(29-27+1)) + 27;
+          this.y = Math.floor(Math.random() * (29 - 27 + 1)) + 27;
           console.log("reached 2");
-          
 
           // sending current user along with all users on join with message name as space-joined
           this.send({
@@ -101,6 +99,94 @@ export class User {
             this.spaceId!
           );
           break;
+        case "chat": {
+          if (!this.spaceId || !this.userId) return;
+
+          const text = parsedData.payload?.message;
+          if (typeof text !== "string" || !text.trim()) return;
+
+          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
+
+          users.forEach((u) => {
+            const dx = u.x - this.x;
+            const dy = u.y - this.y;
+
+            // radius = 2 tiles
+            if (dx * dx + dy * dy <= 4) {
+              u.send({
+                type: "chat",
+                payload: {
+                  userId: this.userId,
+                  message: text,
+                  x: this.x,
+                  y: this.y,
+                  timestamp: Date.now(),
+                },
+              });
+            }
+          });
+
+          break;
+        }
+        case "chat": {
+          if (!this.spaceId || !this.userId) return;
+
+          const text = parsedData.payload?.message;
+          if (typeof text !== "string" || !text.trim()) return;
+
+          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
+
+          users.forEach((u) => {
+            const dx = u.x - this.x;
+            const dy = u.y - this.y;
+
+            // radius = 2 tiles
+            if (dx * dx + dy * dy <= 4) {
+              u.send({
+                type: "chat",
+                payload: {
+                  userId: this.userId,
+                  message: text,
+                  x: this.x,
+                  y: this.y,
+                  timestamp: Date.now(),
+                },
+              });
+            }
+          });
+
+          break;
+        }
+        case "chat": {
+          if (!this.spaceId || !this.userId) return;
+
+          const text = parsedData.payload?.message;
+          if (typeof text !== "string" || !text.trim()) return;
+
+          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
+
+          users.forEach((u) => {
+            const dx = u.x - this.x;
+            const dy = u.y - this.y;
+
+            // radius = 2 tiles
+            if (dx * dx + dy * dy <= 4) {
+              u.send({
+                type: "chat",
+                payload: {
+                  userId: this.userId,
+                  message: text,
+                  x: this.x,
+                  y: this.y,
+                  timestamp: Date.now(),
+                },
+              });
+            }
+          });
+
+          break;
+        }
+
         case "move":
           const moveX = parsedData.payload.x;
           const moveY = parsedData.payload.y;

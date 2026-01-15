@@ -1,1 +1,1 @@
-{"root":["./src/roommanager.ts","./src/usermanager.ts","./src/config.ts","./src/index.ts","./src/types/index.ts"],"version":"5.9.3"}
+{"root":["./src/RoomManager.ts","./src/UserManager.ts","./src/config.ts","./src/index.ts","./src/types/index.ts"],"version":"5.8.2"}

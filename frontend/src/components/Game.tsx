@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { lerp } from "../utility/lerp";
 import { clamp } from "../utility/clamp";
 import { isNear } from "../utility/distance";
+import { ChatBox } from "./Chatbox";
 
 interface UserInterface {
   userId: string;
   x: number;
   y: number;
+}
+export interface ChatMessage {
+  userId: string;
+  chat: string;
 }
 
 const Arena = () => {
@@ -17,7 +22,7 @@ const Arena = () => {
   const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
   const [params, setParams] = useState({ token: "", spaceId: "" });
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
-  const [messages, setMessages] = useState<string[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   type Direction = "up" | "down" | "left" | "right";
   type AnimState = "idle" | "walk";
@@ -27,6 +32,10 @@ const Arena = () => {
   const frameIndexRef = useRef(0);
   const wsReadyRef = useRef(false);
   const [animationReady, setAnimationReady] = useState(false);
+  const [message, setCurrentMessage] = useState<string>("");
+  const [chatMessages, setChatMessages] = useState<Map<string, ChatMessage[]>>(
+    new Map()
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const bgImgRef = useRef<HTMLImageElement | null>(null);
@@ -154,7 +163,7 @@ const Arena = () => {
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
         });
-        setMessages((prev) => [...prev.slice(-10), "You joined the space!"]);
+        setLogs((prev) => [...prev.slice(-10), "You joined the space!"]);
 
         // Initialize other users from the payload
         // map stores like this userid:{userId,x,y}
@@ -176,7 +185,7 @@ const Arena = () => {
           });
           return newUsers;
         });
-        setMessages((prev) => [
+        setLogs((prev) => [
           ...prev.slice(-10),
           `${message.payload.userId} joined the space!!`,
         ]);
@@ -209,7 +218,37 @@ const Arena = () => {
           return newUsers;
         });
         break;
+      case "chat": {
+        const text = message.payload.message;
+        const fromUserId = message.payload.userId;
+
+        setChatMessages((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(fromUserId) || [];
+
+          next.set(fromUserId, [
+            ...existing,
+            { userId: fromUserId, chat: text },
+          ]);
+
+          return next;
+        });
+
+        break;
+      }
     }
+  };
+
+  const handleSendMessage = () => {
+    if (!wsRef.current || !wsReadyRef.current) return;
+    wsRef.current.send(
+      JSON.stringify({
+        type: "chat",
+        payload: {
+          message: "hello",
+        },
+      })
+    );
   };
 
   // Handle user movement
@@ -489,6 +528,10 @@ const Arena = () => {
     return () => window.removeEventListener("keyup", onKeyUp);
   }, []);
 
+  if (loading || !wsReadyRef.current || !animationReady) {
+    return <div>loading</div>;
+  }
+
   return (
     <div className="h-screen w-full text-white bg-gray-900">
       <div
@@ -508,7 +551,7 @@ const Arena = () => {
             Connected Users: {users.size + (currentUser ? 1 : 0)}
           </p>
         </div>
-        <div>Messages:{JSON.stringify(messages)}</div>
+        <div>Messages:{JSON.stringify(logs)}</div>
         <div className=" rounded-2xl border-2 relative border-blue-800 shadow-lg shadow-blue-500/50 w-fit overflow-hidden">
           <canvas
             ref={canvasRef}
@@ -530,6 +573,12 @@ const Arena = () => {
                   transform: "translate(-50%, -100%)",
                 }}
               >
+                <ChatBox
+                onChange={()=>((e:any)=>setCurrentMessage(e.target.value))}
+                  onClick={handleSendMessage}
+                  userId={user.userId}
+                  messages={chatMessages}
+                />
                 <div className="bg-black/80 text-white text-xs px-2 py-1 rounded font-pixel">
                   Press Enter to chat
                 </div>
@@ -542,7 +591,7 @@ const Arena = () => {
           <div
             className={`absolute bottom-4 left-4 font-pixel  max-h-10 bg-black/40`}
           >
-            {messages.map((message: string, key) => {
+            {logs.map((message: string, key) => {
               return (
                 <div key={key} className=" text-white">
                   {message}
