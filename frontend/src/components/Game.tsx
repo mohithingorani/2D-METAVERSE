@@ -16,7 +16,7 @@ const Arena = () => {
   const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
   const [params, setParams] = useState({ token: "", spaceId: "" });
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
-
+  const [messages, setMessages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   type Direction = "up" | "down" | "left" | "right";
   type AnimState = "idle" | "walk";
@@ -156,6 +156,7 @@ const Arena = () => {
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
         });
+        setMessages((prev) => [...prev.slice(-10), "You joined the space!"]);
 
         // Initialize other users from the payload
         // map stores like this userid:{userId,x,y}
@@ -177,6 +178,10 @@ const Arena = () => {
           });
           return newUsers;
         });
+        setMessages((prev) => [
+          ...prev.slice(-10),
+          `${message.payload.userId} joined the space!!`,
+        ]);
         break;
       case "movement":
         setUsers((prev) => {
@@ -469,34 +474,45 @@ const Arena = () => {
   }, []);
 
   return (
-    <div
-      className="p-8 bg-green-300 "
-      ref={containerRef}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-    >
-      <h1 className="text-2xl font-bold mb-4 ">Arena</h1>
-      <div className="mb-4">
-        {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
-        <p className="text-xs text-gray-600">Space ID: {params.spaceId}</p>
-        <p className="text-xs text-gray-600">
-          Loading: {JSON.stringify(loading)}
-        </p>
-        <p className="text-sm text-gray-600">
-          Connected Users: {users.size + (currentUser ? 1 : 0)}
+    <div className="h-screen w-full text-white bg-gray-900">
+      <div
+        className="p-8 outline-none"
+        ref={containerRef}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+      >
+        <h1 className="text-2xl font-bold mb-4 ">Arena</h1>
+        <div className="mb-4">
+          {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
+          <p className="text-xs text-gray-600">Space ID: {params.spaceId}</p>
+          <p className="text-xs text-gray-600">
+            Loading: {JSON.stringify(loading)}
+          </p>
+          <p className="text-sm text-gray-600">
+            Connected Users: {users.size + (currentUser ? 1 : 0)}
+          </p>
+        </div>
+        <div>Messages:{JSON.stringify(messages)}</div>
+        <div className=" rounded-2xl border-2 relative border-blue-800 shadow-lg shadow-blue-500/50 w-fit overflow-hidden">
+          <canvas
+            ref={canvasRef}
+            width={1080}
+            height={603}
+            className="bg-blue-400"
+          />
+          <div className="absolute text-3xl top-4 left-4 font-pixel px-1 bg-black/40 text-white">
+            XY : {currentUser.x}, {currentUser.y}
+          </div>
+          {/* <div  className="absolute bottom-4 left-4 font-pixel  max-h-10 bg-black/40">
+            {messages.map((message: string) => {
+              return <div className=" text-white">{message}</div>;
+            })}
+          </div> */}
+        </div>
+        <p className="mt-2  text-sm text-gray-500">
+          Use arrow keys to move your avatar
         </p>
       </div>
-      <div className=" rounded-lg overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          width={1080}
-          height={603}
-          className="bg-blue-400"
-        />
-      </div>
-      <p className="mt-2 text-sm text-gray-500">
-        Use arrow keys to move your avatar
-      </p>
     </div>
   );
 };
