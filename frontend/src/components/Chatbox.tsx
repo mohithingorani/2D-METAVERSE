@@ -10,6 +10,7 @@ export function ChatBox({
   onChange,
   selfUserId,
   onClose,
+  val
 }: {
   messages: Map<string, ChatMessage[]>;
   userId: string;
@@ -17,6 +18,7 @@ export function ChatBox({
   onChange: (e: any) => void;
   selfUserId: string;
   onClose: () => void;
+  val:string
 }) {
   const userMessages = messages.get(userId) || [];
 
@@ -55,6 +57,7 @@ export function ChatBox({
               if (e.key === "Enter") onClick();
             }}
             type="text"
+            value={val}
             className="w-[100px] bg-transparent text-white placeholder-white outline-none px-2 py-1"
             placeholder="Enter a message"
           />

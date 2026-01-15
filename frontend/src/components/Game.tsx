@@ -635,6 +635,7 @@ const Arena = () => {
               >
                 {activeChatUserId === user.userId && (
                   <ChatBox
+                  val={message}
                     selfUserId={currentUserRef.current.userId}
                     userId={user.userId}
                     messages={chatMessages}
