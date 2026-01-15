@@ -9,7 +9,7 @@ export function ChatBox({
   messages: Map<string, ChatMessage[]>;
   userId: string;
   onClick:()=>void;
-  onChange:()=>void
+  onChange:(e:any)=>void
 }) {
   const userMessages = messages.get(userId) || [];
 

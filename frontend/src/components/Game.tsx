@@ -241,14 +241,16 @@ const Arena = () => {
 
   const handleSendMessage = () => {
     if (!wsRef.current || !wsReadyRef.current) return;
+    if (typeof message !== "string" || !message.trim()) return;
     wsRef.current.send(
       JSON.stringify({
         type: "chat",
         payload: {
-          message: "hello",
+          message: message,
         },
       })
     );
+    setCurrentMessage("");
   };
 
   // Handle user movement
@@ -560,8 +562,8 @@ const Arena = () => {
             className="bg-blue-400"
           />
           {nearbyUsers.map((user) => {
-            const screenX = user.x * TILE_SIZE - cameraRef.current.x;
-            const screenY = user.y * TILE_SIZE - cameraRef.current.y;
+            const screenX = user.x * TILE_SIZE - cameraRef.current.x || 0;
+            const screenY = user.y * TILE_SIZE - cameraRef.current.y || 0;
 
             return (
               <div
@@ -574,7 +576,7 @@ const Arena = () => {
                 }}
               >
                 <ChatBox
-                onChange={()=>((e:any)=>setCurrentMessage(e.target.value))}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
                   onClick={handleSendMessage}
                   userId={user.userId}
                   messages={chatMessages}
@@ -585,6 +587,7 @@ const Arena = () => {
               </div>
             );
           })}
+          {JSON.stringify(message)}
           <div className="absolute text-3xl top-4 left-4 font-pixel px-1 bg-black/40 text-white">
             XY : {currentUser.x}, {currentUser.y}
           </div>
