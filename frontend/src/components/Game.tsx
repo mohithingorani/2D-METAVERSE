@@ -17,6 +17,7 @@ const Arena = () => {
   const [params, setParams] = useState({ token: "", spaceId: "" });
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
 
+  const [loading, setLoading] = useState(true);
   type Direction = "up" | "down" | "left" | "right";
   type AnimState = "idle" | "walk";
   const isMovingRef = useRef(false);
@@ -232,58 +233,75 @@ const Arena = () => {
     walk: Record<Direction, HTMLImageElement[]>;
   } | null>(null);
 
+  const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve(img);
+  });
+
+
   useEffect(() => {
-    const load = (src: string) => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    };
+  let cancelled = false;
+
+  const loadAll = async () => {
+    const idle = await Promise.all([
+      loadImage("/still/still_01.png"),
+      loadImage("/still/still_02.png"),
+      loadImage("/still/still_03.png"),
+      loadImage("/still/still_04.png"),
+    ]);
+
+    const up = await Promise.all([
+      loadImage("/walk/up/up_01.png"),
+      loadImage("/walk/up/up_02.png"),
+      loadImage("/walk/up/up_03.png"),
+      loadImage("/walk/up/up_04.png"),
+    ]);
+
+    const left = await Promise.all([
+      loadImage("/walk/left/left_01.png"),
+      loadImage("/walk/left/left_02.png"),
+      loadImage("/walk/left/left_03.png"),
+      loadImage("/walk/left/left_04.png"),
+      loadImage("/walk/left/left_05.png"),
+      loadImage("/walk/left/left_06.png"),
+      loadImage("/walk/left/left_07.png"),
+    ]);
+
+    const right = await Promise.all([
+      loadImage("/walk/right/right_01.png"),
+      loadImage("/walk/right/right_02.png"),
+      loadImage("/walk/right/right_03.png"),
+      loadImage("/walk/right/right_04.png"),
+      loadImage("/walk/right/right_05.png"),
+    ]);
+
+    if (cancelled) return;
 
     animationsRef.current = {
-      idle: [
-        load("/still/still_01.png"),
-        load("/still/still_02.png"),
-        load("/still/still_03.png"),
-        load("/still/still_04.png"),
-      ],
+      idle,
       walk: {
-        up: [
-          load("/walk/up/up_01.png"),
-          load("/walk/up/up_02.png"),
-          load("/walk/up/up_03.png"),
-          load("/walk/up/up_04.png"),
-        ],
-        down: [
-          load("/walk/left/left_01.png"),
-          load("/walk/left/left_02.png"),
-          load("/walk/left/left_03.png"),
-          load("/walk/left/left_04.png"),
-          load("/walk/left/left_05.png"),
-          load("/walk/left/left_06.png"),
-          load("/walk/left/left_07.png"),
-        ],
-        left: [
-          load("/walk/left/left_01.png"),
-          load("/walk/left/left_02.png"),
-          load("/walk/left/left_03.png"),
-          load("/walk/left/left_04.png"),
-          load("/walk/left/left_05.png"),
-          load("/walk/left/left_06.png"),
-          load("/walk/left/left_07.png"),
-        ],
-        right: [
-          load("/walk/right/right_01.png"),
-          load("/walk/right/right_02.png"),
-          load("/walk/right/right_03.png"),
-          load("/walk/right/right_04.png"),
-          load("/walk/right/right_05.png"),
-        ],
+        up,
+        down: idle,
+        left,
+        right,
       },
     };
-  }, []);
+
+    setLoading(false); // ✅ ALL LOADED
+  };
+
+  loadAll();
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
 
   // Draw arena
   useEffect(() => {
+    if(loading) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const viewWidth = canvas.width;
@@ -340,6 +358,15 @@ const Arena = () => {
         SIZE,
         SIZE
       );
+      ctx.fillStyle = "#000";
+      ctx.font = "14px Arial";
+      ctx.textAlign = "center";
+
+      ctx.fillText(
+        "You",
+        renderPos.x * TILE_SIZE,
+        renderPos.y * TILE_SIZE - SIZE / 2 - 10
+      );
     }
 
     // ===== DRAW OTHER USERS =====
@@ -353,7 +380,7 @@ const Arena = () => {
       if (!sprite) return;
 
       const scale = 20;
-      const SIZE = 32;
+      const SIZE = 70;
 
       ctx.drawImage(
         frame,
@@ -362,7 +389,6 @@ const Arena = () => {
         SIZE,
         SIZE
       );
-
       ctx.fillStyle = "#000";
       ctx.textAlign = "center";
       ctx.fillText(`User ${user.userId}`, user.x * scale, user.y * scale - 24);
@@ -376,7 +402,7 @@ const Arena = () => {
     // throttling, rate limittin - limiting how fast movement can happen
     // allow movement only once every 16ms
     const now = Date.now();
-    if (now - lastMove.current < 60) return;
+    if (now - lastMove.current < 100) return;
     lastMove.current = now;
 
     const { x, y } = currentUser;
@@ -422,6 +448,9 @@ const Arena = () => {
   // }, [currentUser.x, currentUser.y]);
 
   useEffect(() => {
+  containerRef.current?.focus();
+}, []);
+  useEffect(() => {
     const onKeyUp = () => {
       isMovingRef.current = false;
       animStateRef.current = "idle";
@@ -443,6 +472,7 @@ const Arena = () => {
       <div className="mb-4">
         {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
         <p className="text-xs text-gray-600">Space ID: {params.spaceId}</p>
+        <p className="text-xs text-gray-600">Loading: {JSON.stringify(loading)}</p>
         <p className="text-sm text-gray-600">
           Connected Users: {users.size + (currentUser ? 1 : 0)}
         </p>
