@@ -386,7 +386,7 @@ const Arena = () => {
       const sprite = spriteRef.current;
       if (!sprite) return;
 
-      const scale = 20;
+      const scale = TILE_SIZE;
       const SIZE = 70;
 
       ctx.drawImage(
