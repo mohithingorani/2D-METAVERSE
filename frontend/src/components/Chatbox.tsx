@@ -1,32 +1,64 @@
 import type { ChatMessage } from "./Game";
 
+import send from "../assets/send.svg";
+import { TextMessage } from "./TextMessage";
+import { useEffect, useRef } from "react";
 export function ChatBox({
   messages,
   userId,
   onClick,
-  onChange
+  onChange,
+  selfUserId,
+  onClose,
 }: {
   messages: Map<string, ChatMessage[]>;
   userId: string;
-  onClick:()=>void;
-  onChange:(e:any)=>void
+  onClick: () => void;
+  onChange: (e: any) => void;
+  selfUserId: string;
+  onClose: () => void;
 }) {
   const userMessages = messages.get(userId) || [];
 
   //   if (!userMessages || userMessages.length === 0) return null;
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
   return (
-    <div className="mb-1 flex flex-col max-w-[160px] rounded bg-white px-2 py-1 text-xs text-black shadow">
-      <div className="flex justify-between ">
-        <input onChange={onChange} type="text" className="w-[100px] px-2 py-1" placeholder="Enter a message" />
-        <button onClick={onClick} className="w-[60px]">send</button>
-      </div>
-      <div>
-        {userMessages.slice(-3).map((m, i) => (
-          <div key={i} className="leading-tight">
-            {m.chat}
-          </div>
-        ))}
+    <div className="relative">
+      <div
+        className="mb-1 max-w-[160px]   bg-black rounded-md bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-60  
+ px-2 py-1 text-xs text-black shadow "
+      >
+        <div className="flex flex-col mb-1">
+          {userMessages.slice(-3).map((m, i) => (
+            <TextMessage
+              userId={m.userId}
+              text={m.chat}
+              selfUserId={selfUserId}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between ">
+          <input
+            ref={inputRef}
+            onChange={onChange}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === "Escape") onClose();
+              if (e.key === "Enter") onClick();
+            }}
+            type="text"
+            className="w-[100px] bg-transparent text-white placeholder-white outline-none px-2 py-1"
+            placeholder="Enter a message"
+          />
+          <button onClick={onClick} className="w-[40px]  flex justify-center">
+            <img className="invert" width={"20"} src={send} alt="send" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -239,7 +239,7 @@ const Arena = () => {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (userId: string) => {
     if (!wsRef.current || !wsReadyRef.current) return;
     if (typeof message !== "string" || !message.trim()) return;
     wsRef.current.send(
@@ -250,6 +250,18 @@ const Arena = () => {
         },
       })
     );
+    setChatMessages((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(userId) || [];
+
+      next.set(userId, [
+        ...existing,
+        { userId: currentUserRef.current.userId, chat: message },
+      ]);
+
+      return next;
+    });
+
     setCurrentMessage("");
   };
 
@@ -453,6 +465,7 @@ const Arena = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // throttling, rate limittin - limiting how fast movement can happen
     // allow movement only once every 16ms
+    if (activeChatUserId) return;
     const now = Date.now();
     if (now - lastMove.current < 100) return;
     lastMove.current = now;
@@ -488,6 +501,13 @@ const Arena = () => {
         animStateRef.current = "walk";
         handleMove(x + 1, y);
         break;
+
+      case "Enter": {
+        if (nearbyUsers.length > 0) {
+          setActiveChatUserId(nearbyUsers[0].userId);
+        }
+        break;
+      }
     }
   };
   // useEffect(() => {
@@ -516,8 +536,12 @@ const Arena = () => {
     (u) => currentUser?.x && isNear(currentUser, u)
   );
 
+  const [activeChatUserId, setActiveChatUserId] = useState<string | null>(null);
+
   useEffect(() => {
-    containerRef.current?.focus();
+    requestAnimationFrame(() => {
+      containerRef.current?.focus();
+    });
   }, []);
   useEffect(() => {
     const onKeyUp = () => {
@@ -529,10 +553,27 @@ const Arena = () => {
     window.addEventListener("keyup", onKeyUp);
     return () => window.removeEventListener("keyup", onKeyUp);
   }, []);
-
-  if (loading || !wsReadyRef.current || !animationReady) {
+  useEffect(() => {
+    if (
+      activeChatUserId &&
+      !nearbyUsers.find((u) => u.userId === activeChatUserId)
+    ) {
+      setActiveChatUserId(null);
+    }
+  }, [nearbyUsers]);
+  if (
+    loading ||
+    !wsReadyRef.current ||
+    !animationReady ||
+    !currentUserRef.current
+  ) {
     return <div>loading</div>;
   }
+  const focusGame = () => {
+  requestAnimationFrame(() => {
+    containerRef.current?.focus();
+  });
+};
 
   return (
     <div className="h-screen w-full text-white bg-gray-900">
@@ -575,12 +616,21 @@ const Arena = () => {
                   transform: "translate(-50%, -100%)",
                 }}
               >
-                <ChatBox
-                  onChange={(e) => setCurrentMessage(e.target.value)}
-                  onClick={handleSendMessage}
-                  userId={user.userId}
-                  messages={chatMessages}
-                />
+                {activeChatUserId === user.userId && (
+                  <ChatBox
+                  
+                    selfUserId={currentUserRef.current.userId}
+                    userId={user.userId}
+                    messages={chatMessages}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    onClick={() => {
+                      handleSendMessage(user.userId);
+                      setActiveChatUserId(null); 
+                      focusGame();
+                    }}
+                    onClose={() => setActiveChatUserId(null)}
+                  />
+                )}
                 <div className="bg-black/80 text-white text-xs px-2 py-1 rounded font-pixel">
                   Press Enter to chat
                 </div>

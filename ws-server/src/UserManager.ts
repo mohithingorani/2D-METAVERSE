@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import axios from "axios";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RoomManager } from "./RoomManager";
+import { timeStamp } from "node:console";
 
 dotenv.config();
 function generateRandomString(num: number) {
@@ -135,6 +136,17 @@ export class User {
           if (typeof text !== "string" || !text.trim()) return;
 
           const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
+
+          this.send({
+            type:"chat",
+            payload:{
+              userId:this.userId,
+              message:text,
+              x:this.x,
+              y:this.y,
+              timeStamp:Date.now()
+            }
+          })
 
           users.forEach((u) => {
             const dx = u.x - this.x;
