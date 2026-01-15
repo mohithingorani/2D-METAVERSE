@@ -100,35 +100,7 @@ export class User {
             this.spaceId!
           );
           break;
-        case "chat": {
-          if (!this.spaceId || !this.userId) return;
-
-          const text = parsedData.payload?.message;
-          if (typeof text !== "string" || !text.trim()) return;
-
-          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
-
-          users.forEach((u) => {
-            const dx = u.x - this.x;
-            const dy = u.y - this.y;
-
-            // radius = 2 tiles
-            if (dx * dx + dy * dy <= 4) {
-              u.send({
-                type: "chat",
-                payload: {
-                  userId: this.userId,
-                  message: text,
-                  x: this.x,
-                  y: this.y,
-                  timestamp: Date.now(),
-                },
-              });
-            }
-          });
-
-          break;
-        }
+     
         case "chat": {
           if (!this.spaceId || !this.userId) return;
 
@@ -169,35 +141,7 @@ export class User {
 
           break;
         }
-        case "chat": {
-          if (!this.spaceId || !this.userId) return;
-
-          const text = parsedData.payload?.message;
-          if (typeof text !== "string" || !text.trim()) return;
-
-          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
-
-          users.forEach((u) => {
-            const dx = u.x - this.x;
-            const dy = u.y - this.y;
-
-            // radius = 2 tiles
-            if (dx * dx + dy * dy <= 4) {
-              u.send({
-                type: "chat",
-                payload: {
-                  userId: this.userId,
-                  message: text,
-                  x: this.x,
-                  y: this.y,
-                  timestamp: Date.now(),
-                },
-              });
-            }
-          });
-
-          break;
-        }
+       
 
         case "move":
           const moveX = parsedData.payload.x;
