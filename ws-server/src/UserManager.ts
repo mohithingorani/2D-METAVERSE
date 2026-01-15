@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import axios from "axios";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RoomManager } from "./RoomManager";
+import { timeStamp } from "node:console";
 
 dotenv.config();
 function generateRandomString(num: number) {
@@ -17,7 +18,6 @@ function generateRandomString(num: number) {
 
 const BACKEND_URL = process.env.BACKEND_URL as string;
 const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
-
 
 export class User {
   public id: string;
@@ -61,8 +61,8 @@ export class User {
 
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
-          this.x = 4
-          this.y = 4
+          this.x = Math.floor(Math.random() * (31 - 24 + 1)) + 24;
+          this.y = Math.floor(Math.random() * (29 - 27 + 1)) + 27;
           console.log("reached 2");
 
           // sending current user along with all users on join with message name as space-joined
@@ -100,13 +100,112 @@ export class User {
             this.spaceId!
           );
           break;
+        case "chat": {
+          if (!this.spaceId || !this.userId) return;
+
+          const text = parsedData.payload?.message;
+          if (typeof text !== "string" || !text.trim()) return;
+
+          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
+
+          users.forEach((u) => {
+            const dx = u.x - this.x;
+            const dy = u.y - this.y;
+
+            // radius = 2 tiles
+            if (dx * dx + dy * dy <= 4) {
+              u.send({
+                type: "chat",
+                payload: {
+                  userId: this.userId,
+                  message: text,
+                  x: this.x,
+                  y: this.y,
+                  timestamp: Date.now(),
+                },
+              });
+            }
+          });
+
+          break;
+        }
+        case "chat": {
+          if (!this.spaceId || !this.userId) return;
+
+          const text = parsedData.payload?.message;
+          if (typeof text !== "string" || !text.trim()) return;
+
+          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
+
+          this.send({
+            type:"chat",
+            payload:{
+              userId:this.userId,
+              message:text,
+              x:this.x,
+              y:this.y,
+              timeStamp:Date.now()
+            }
+          })
+
+          users.forEach((u) => {
+            const dx = u.x - this.x;
+            const dy = u.y - this.y;
+
+            // radius = 2 tiles
+            if (dx * dx + dy * dy <= 4) {
+              u.send({
+                type: "chat",
+                payload: {
+                  userId: this.userId,
+                  message: text,
+                  x: this.x,
+                  y: this.y,
+                  timestamp: Date.now(),
+                },
+              });
+            }
+          });
+
+          break;
+        }
+        case "chat": {
+          if (!this.spaceId || !this.userId) return;
+
+          const text = parsedData.payload?.message;
+          if (typeof text !== "string" || !text.trim()) return;
+
+          const users = RoomManager.getInstance().rooms.get(this.spaceId) || [];
+
+          users.forEach((u) => {
+            const dx = u.x - this.x;
+            const dy = u.y - this.y;
+
+            // radius = 2 tiles
+            if (dx * dx + dy * dy <= 4) {
+              u.send({
+                type: "chat",
+                payload: {
+                  userId: this.userId,
+                  message: text,
+                  x: this.x,
+                  y: this.y,
+                  timestamp: Date.now(),
+                },
+              });
+            }
+          });
+
+          break;
+        }
+
         case "move":
           const moveX = parsedData.payload.x;
           const moveY = parsedData.payload.y;
           const xDisplacement = Math.abs(this.x - moveX);
           const yDisplacement = Math.abs(this.y - moveY);
           console.log("reached 4");
-          const isInside = moveX >= 0 && moveY >= 0 && moveX < 35 && moveY < 25;
+          const isInside = moveX >= 1 && moveY >= 1 && moveX < 54 && moveY < 30;
           if (
             isInside &&
             ((xDisplacement == 1 && yDisplacement == 0) ||

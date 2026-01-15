@@ -28,7 +28,7 @@ export class RoomManager {
 
   public addUser(spaceId: string, user: User) {
     if (!this.rooms.has(spaceId)) {
-      this.rooms.set(spaceId, []); // ✅ create room
+      this.rooms.set(spaceId, []);
     }
 
     this.rooms.set(spaceId, [...(this.rooms.get(spaceId) ?? []), user]);
