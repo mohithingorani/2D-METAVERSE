@@ -17,6 +17,13 @@ const Arena = () => {
   const [params, setParams] = useState({ token: "", spaceId: "" });
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
 
+  type Direction = "up" | "down" | "left" | "right";
+  type AnimState = "idle" | "walk";
+  const isMovingRef = useRef(false);
+  const directionRef = useRef<Direction>("down");
+  const animStateRef = useRef<AnimState>("idle");
+  const frameIndexRef = useRef(0);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const bgImgRef = useRef<HTMLImageElement | null>(null);
   const spriteRef = useRef<HTMLImageElement | null>(null);
@@ -54,6 +61,19 @@ const Arena = () => {
     let id: number;
 
     const animate = () => {
+      const anim = animationsRef.current;
+      if (anim) {
+        if (animStateRef.current === "walk") {
+          const frames = anim.walk[directionRef.current];
+          frameIndexRef.current =
+            (frameIndexRef.current + 0.15) % frames.length;
+        } else {
+          // idle animation (no direction)
+          frameIndexRef.current =
+            (frameIndexRef.current + 0.05) % anim.idle.length;
+        }
+      }
+
       // copy currentuser from its ref
       const cu = currentUserRef.current;
 
@@ -95,22 +115,16 @@ const Arena = () => {
     wsRef.current = new WebSocket("ws://localhost:8080");
 
     wsRef.current.onopen = () => {
-      // Join the space once connected
       wsRef.current.send(
         JSON.stringify({
           type: "join",
-          payload: {
-            spaceId,
-            token,
-          },
+          payload: { spaceId, token },
         })
       );
     };
 
-    // whenever client ws recieves a message
     wsRef.current.onmessage = (event: any) => {
-      const message = JSON.parse(event.data);
-      handleWebSocketMessage(message);
+      handleWebSocketMessage(JSON.parse(event.data));
     };
   }, []);
 
@@ -212,6 +226,62 @@ const Arena = () => {
       })
     );
   };
+
+  const animationsRef = useRef<{
+    idle: HTMLImageElement[];
+    walk: Record<Direction, HTMLImageElement[]>;
+  } | null>(null);
+
+  useEffect(() => {
+    const load = (src: string) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    };
+
+    animationsRef.current = {
+      idle: [
+        load("/still/still_01.png"),
+        load("/still/still_02.png"),
+        load("/still/still_03.png"),
+        load("/still/still_04.png"),
+      ],
+      walk: {
+        up: [
+          load("/walk/up/up_01.png"),
+          load("/walk/up/up_02.png"),
+          load("/walk/up/up_03.png"),
+          load("/walk/up/up_04.png"),
+        ],
+        down: [
+          load("/walk/left/left_01.png"),
+          load("/walk/left/left_02.png"),
+          load("/walk/left/left_03.png"),
+          load("/walk/left/left_04.png"),
+          load("/walk/left/left_05.png"),
+          load("/walk/left/left_06.png"),
+          load("/walk/left/left_07.png"),
+        ],
+        left: [
+          load("/walk/left/left_01.png"),
+          load("/walk/left/left_02.png"),
+          load("/walk/left/left_03.png"),
+          load("/walk/left/left_04.png"),
+          load("/walk/left/left_05.png"),
+          load("/walk/left/left_06.png"),
+          load("/walk/left/left_07.png"),
+        ],
+        right: [
+          load("/walk/right/right_01.png"),
+          load("/walk/right/right_02.png"),
+          load("/walk/right/right_03.png"),
+          load("/walk/right/right_04.png"),
+          load("/walk/right/right_05.png"),
+        ],
+      },
+    };
+  }, []);
+
   // Draw arena
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -247,30 +317,38 @@ const Arena = () => {
     }
 
     if (currentUser.x !== undefined) {
-      const sprite = spriteRef.current;
+      const anim = animationsRef.current;
+      if (!anim) return;
 
-      if (sprite) {
-        const scale = TILE_SIZE;
-        const SIZE = 70;
+      let frame: HTMLImageElement;
 
-        ctx.drawImage(
-          sprite,
-          renderPos.x * scale - SIZE / 2,
-          renderPos.y * scale - SIZE / 2,
-          SIZE,
-          SIZE
-        );
-
-        ctx.fillStyle = "#000";
-        ctx.textAlign = "center";
-        ctx.fillText("You", renderPos.x * scale, renderPos.y * scale - 24);
+      if (animStateRef.current === "walk") {
+        const frames = anim.walk[directionRef.current];
+        frame = frames[Math.floor(frameIndexRef.current)];
+      } else {
+        frame = anim.idle[Math.floor(frameIndexRef.current)];
       }
+
+      const SIZE = 70;
+      const scale = TILE_SIZE;
+      if (!frame.complete) return;
+
+      ctx.drawImage(
+        frame,
+        renderPos.x * scale - SIZE / 2,
+        renderPos.y * scale - SIZE / 2,
+        SIZE,
+        SIZE
+      );
     }
 
     // ===== DRAW OTHER USERS =====
     renderUsers.forEach((user) => {
       if (user.x === undefined) return;
-
+      const frame =
+        animationsRef.current!.idle[
+          Math.floor(frameIndexRef.current) % animationsRef.current!.idle.length
+        ];
       const sprite = spriteRef.current;
       if (!sprite) return;
 
@@ -278,9 +356,9 @@ const Arena = () => {
       const SIZE = 32;
 
       ctx.drawImage(
-        sprite,
-        user.x * scale - SIZE / 2,
-        user.y * scale - SIZE / 2,
+        frame,
+        user.x * TILE_SIZE - SIZE / 2,
+        user.y * TILE_SIZE - SIZE / 2,
         SIZE,
         SIZE
       );
@@ -306,19 +384,53 @@ const Arena = () => {
 
     switch (e.key) {
       case "ArrowUp":
+        isMovingRef.current = true;
+        directionRef.current = "up";
+        animStateRef.current = "walk";
         handleMove(x, y - 1);
         break;
+
       case "ArrowDown":
+        isMovingRef.current = true;
+        directionRef.current = "down";
+        animStateRef.current = "walk";
         handleMove(x, y + 1);
         break;
+
       case "ArrowLeft":
+        isMovingRef.current = true;
+        directionRef.current = "left";
+        animStateRef.current = "walk";
         handleMove(x - 1, y);
         break;
+
       case "ArrowRight":
+        isMovingRef.current = true;
+        directionRef.current = "right";
+        animStateRef.current = "walk";
         handleMove(x + 1, y);
         break;
     }
   };
+  // useEffect(() => {
+  //   const t = setTimeout(() => {
+  //     animStateRef.current = "idle";
+  //     frameIndexRef.current = 0;
+  //   }, 120);
+
+  //   return () => clearTimeout(t);
+  // }, [currentUser.x, currentUser.y]);
+
+  useEffect(() => {
+    const onKeyUp = () => {
+      isMovingRef.current = false;
+      animStateRef.current = "idle";
+      frameIndexRef.current = 0;
+    };
+
+    window.addEventListener("keyup", onKeyUp);
+    return () => window.removeEventListener("keyup", onKeyUp);
+  }, []);
 
   return (
     <div
