@@ -24,6 +24,7 @@ const Arena = () => {
   const directionRef = useRef<Direction>("down");
   const animStateRef = useRef<AnimState>("idle");
   const frameIndexRef = useRef(0);
+  const wsReadyRef = useRef(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const bgImgRef = useRef<HTMLImageElement | null>(null);
@@ -116,6 +117,8 @@ const Arena = () => {
     wsRef.current = new WebSocket("ws://localhost:8080");
 
     wsRef.current.onopen = () => {
+      wsReadyRef.current = true;
+
       wsRef.current.send(
         JSON.stringify({
           type: "join",
@@ -126,6 +129,10 @@ const Arena = () => {
 
     wsRef.current.onmessage = (event: any) => {
       handleWebSocketMessage(JSON.parse(event.data));
+    };
+    return () => {
+      wsReadyRef.current = false;
+      wsRef.current?.close();
     };
   }, []);
 
@@ -204,6 +211,8 @@ const Arena = () => {
 
   // Handle user movement
   const handleMove = (newX: number, newY: number) => {
+    if (!wsRef.current || !wsReadyRef.current) return;
+
     newX = clamp(newX, 1, 53);
     newY = clamp(newY, 1, 29);
     setCurrentUser((prev: any) => ({
@@ -234,74 +243,72 @@ const Arena = () => {
   } | null>(null);
 
   const loadImage = (src: string) =>
-  new Promise<HTMLImageElement>((resolve) => {
-    const img = new Image();
-    img.src = src;
-    img.onload = () => resolve(img);
-  });
-
+    new Promise<HTMLImageElement>((resolve) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => resolve(img);
+    });
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  const loadAll = async () => {
-    const idle = await Promise.all([
-      loadImage("/still/still_01.png"),
-      loadImage("/still/still_02.png"),
-      loadImage("/still/still_03.png"),
-      loadImage("/still/still_04.png"),
-    ]);
+    const loadAll = async () => {
+      const idle = await Promise.all([
+        loadImage("/still/still_01.png"),
+        loadImage("/still/still_02.png"),
+        loadImage("/still/still_03.png"),
+        loadImage("/still/still_04.png"),
+      ]);
 
-    const up = await Promise.all([
-      loadImage("/walk/up/up_01.png"),
-      loadImage("/walk/up/up_02.png"),
-      loadImage("/walk/up/up_03.png"),
-      loadImage("/walk/up/up_04.png"),
-    ]);
+      const up = await Promise.all([
+        loadImage("/walk/up/up_01.png"),
+        loadImage("/walk/up/up_02.png"),
+        loadImage("/walk/up/up_03.png"),
+        loadImage("/walk/up/up_04.png"),
+      ]);
 
-    const left = await Promise.all([
-      loadImage("/walk/left/left_01.png"),
-      loadImage("/walk/left/left_02.png"),
-      loadImage("/walk/left/left_03.png"),
-      loadImage("/walk/left/left_04.png"),
-      loadImage("/walk/left/left_05.png"),
-      loadImage("/walk/left/left_06.png"),
-      loadImage("/walk/left/left_07.png"),
-    ]);
+      const left = await Promise.all([
+        loadImage("/walk/left/left_01.png"),
+        loadImage("/walk/left/left_02.png"),
+        loadImage("/walk/left/left_03.png"),
+        loadImage("/walk/left/left_04.png"),
+        loadImage("/walk/left/left_05.png"),
+        loadImage("/walk/left/left_06.png"),
+        loadImage("/walk/left/left_07.png"),
+      ]);
 
-    const right = await Promise.all([
-      loadImage("/walk/right/right_01.png"),
-      loadImage("/walk/right/right_02.png"),
-      loadImage("/walk/right/right_03.png"),
-      loadImage("/walk/right/right_04.png"),
-      loadImage("/walk/right/right_05.png"),
-    ]);
+      const right = await Promise.all([
+        loadImage("/walk/right/right_01.png"),
+        loadImage("/walk/right/right_02.png"),
+        loadImage("/walk/right/right_03.png"),
+        loadImage("/walk/right/right_04.png"),
+        loadImage("/walk/right/right_05.png"),
+      ]);
 
-    if (cancelled) return;
+      if (cancelled) return;
 
-    animationsRef.current = {
-      idle,
-      walk: {
-        up,
-        down: idle,
-        left,
-        right,
-      },
+      animationsRef.current = {
+        idle,
+        walk: {
+          up,
+          down: idle,
+          left,
+          right,
+        },
+      };
+
+      setLoading(false); // ✅ ALL LOADED
     };
 
-    setLoading(false); // ✅ ALL LOADED
-  };
-
-  loadAll();
-  return () => {
-    cancelled = true;
-  };
-}, []);
-
+    loadAll();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Draw arena
   useEffect(() => {
-    if(loading) return;
+    if (loading) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const viewWidth = canvas.width;
@@ -448,8 +455,8 @@ const Arena = () => {
   // }, [currentUser.x, currentUser.y]);
 
   useEffect(() => {
-  containerRef.current?.focus();
-}, []);
+    containerRef.current?.focus();
+  }, []);
   useEffect(() => {
     const onKeyUp = () => {
       isMovingRef.current = false;
@@ -472,7 +479,9 @@ const Arena = () => {
       <div className="mb-4">
         {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
         <p className="text-xs text-gray-600">Space ID: {params.spaceId}</p>
-        <p className="text-xs text-gray-600">Loading: {JSON.stringify(loading)}</p>
+        <p className="text-xs text-gray-600">
+          Loading: {JSON.stringify(loading)}
+        </p>
         <p className="text-sm text-gray-600">
           Connected Users: {users.size + (currentUser ? 1 : 0)}
         </p>

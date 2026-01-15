@@ -61,8 +61,8 @@ export class User {
 
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
-          this.x = 4
-          this.y = 4
+          this.x = Math.floor(Math.random() * (31 - 24 + 1)) + 24;
+          this.y = Math.floor(Math.random()*(29-27+1)) + 27;
           console.log("reached 2");
 
           // sending current user along with all users on join with message name as space-joined
