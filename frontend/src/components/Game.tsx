@@ -3,6 +3,7 @@ import { lerp } from "../utility/lerp";
 import { clamp } from "../utility/clamp";
 import { isNear } from "../utility/distance";
 import { ChatBox } from "./Chatbox";
+import { ClickToStart } from "./ClickToStart";
 
 interface UserInterface {
   userId: string;
@@ -240,29 +241,31 @@ const Arena = () => {
   };
 
   const handleSendMessage = (userId: string) => {
-    if (!wsRef.current || !wsReadyRef.current) return;
-    if (typeof message !== "string" || !message.trim()) return;
+    if (!message.trim()) return;
+
     wsRef.current.send(
       JSON.stringify({
         type: "chat",
-        payload: {
-          message: message,
-        },
+        payload: { message },
       })
     );
+
     setChatMessages((prev) => {
       const next = new Map(prev);
       const existing = next.get(userId) || [];
-
       next.set(userId, [
         ...existing,
         { userId: currentUserRef.current.userId, chat: message },
       ]);
-
       return next;
     });
 
     setCurrentMessage("");
+  };
+  const focusGame = () => {
+    requestAnimationFrame(() => {
+      containerRef.current?.focus();
+    });
   };
 
   // Handle user movement
@@ -354,7 +357,7 @@ const Arena = () => {
       };
       setAnimationReady(true);
 
-      setLoading(false); // ✅ ALL LOADED
+      setLoading(false);
     };
 
     loadAll();
@@ -462,10 +465,22 @@ const Arena = () => {
 
   const lastMove = useRef(0);
 
+  const closeChat = () => {
+    setActiveChatUserId(null);
+    focusGame();
+  };
+  const [hasStarted, setHasStarted] = useState(false);
+
+  const startGame = () => {
+    setHasStarted(true);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // throttling, rate limittin - limiting how fast movement can happen
     // allow movement only once every 16ms
+    if(!hasStarted) return;
     if (activeChatUserId) return;
+
     const now = Date.now();
     if (now - lastMove.current < 100) return;
     lastMove.current = now;
@@ -539,10 +554,12 @@ const Arena = () => {
   const [activeChatUserId, setActiveChatUserId] = useState<string | null>(null);
 
   useEffect(() => {
+  if (hasStarted) {
     requestAnimationFrame(() => {
       containerRef.current?.focus();
     });
-  }, []);
+  }
+}, [hasStarted]);
   useEffect(() => {
     const onKeyUp = () => {
       isMovingRef.current = false;
@@ -553,12 +570,15 @@ const Arena = () => {
     window.addEventListener("keyup", onKeyUp);
     return () => window.removeEventListener("keyup", onKeyUp);
   }, []);
+
+  // if user2 walks away, bring back focus
+
   useEffect(() => {
     if (
       activeChatUserId &&
       !nearbyUsers.find((u) => u.userId === activeChatUserId)
     ) {
-      setActiveChatUserId(null);
+      closeChat();
     }
   }, [nearbyUsers]);
   if (
@@ -569,14 +589,11 @@ const Arena = () => {
   ) {
     return <div>loading</div>;
   }
-  const focusGame = () => {
-  requestAnimationFrame(() => {
-    containerRef.current?.focus();
-  });
-};
 
   return (
     <div className="h-screen w-full text-white bg-gray-900">
+      {!hasStarted && <ClickToStart onStart={startGame} />}
+      {/* rest of arena */}
       <div
         className="p-8 outline-none"
         ref={containerRef}
@@ -618,26 +635,26 @@ const Arena = () => {
               >
                 {activeChatUserId === user.userId && (
                   <ChatBox
-                  
                     selfUserId={currentUserRef.current.userId}
                     userId={user.userId}
                     messages={chatMessages}
                     onChange={(e) => setCurrentMessage(e.target.value)}
                     onClick={() => {
                       handleSendMessage(user.userId);
-                      setActiveChatUserId(null); 
-                      focusGame();
                     }}
-                    onClose={() => setActiveChatUserId(null)}
+                    onClose={() => {
+                      closeChat();
+                    }}
                   />
                 )}
-                <div className="bg-black/80 text-white text-xs px-2 py-1 rounded font-pixel">
-                  Press Enter to chat
-                </div>
+                {!activeChatUserId && (
+                  <div className="bg-black/80 text-white text-xs px-2 py-1 rounded font-pixel">
+                    Press Enter to chat
+                  </div>
+                )}
               </div>
             );
           })}
-          {JSON.stringify(message)}
           <div className="absolute text-3xl top-4 left-4 font-pixel px-1 bg-black/40 text-white">
             XY : {currentUser.x}, {currentUser.y}
           </div>

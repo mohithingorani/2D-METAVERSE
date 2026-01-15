@@ -21,6 +21,7 @@ export function ChatBox({
   const userMessages = messages.get(userId) || [];
 
   //   if (!userMessages || userMessages.length === 0) return null;
+  
 
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -36,6 +37,7 @@ export function ChatBox({
         <div className="flex flex-col mb-1">
           {userMessages.slice(-3).map((m, i) => (
             <TextMessage
+            key={i}
               userId={m.userId}
               text={m.chat}
               selfUserId={selfUserId}
@@ -48,6 +50,7 @@ export function ChatBox({
             onChange={onChange}
             onKeyDown={(e) => {
               e.stopPropagation();
+              // e.preventDefault();
               if (e.key === "Escape") onClose();
               if (e.key === "Enter") onClick();
             }}
