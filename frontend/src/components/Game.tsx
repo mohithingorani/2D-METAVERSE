@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { lerp } from "../utility/lerp";
 import { clamp } from "../utility/clamp";
+import {  isNear } from "../utility/distance";
 
 interface UserInterface {
   userId: string;
@@ -49,15 +50,11 @@ const Arena = () => {
   const currentUserRef = useRef(currentUser);
   const usersRef = useRef(users);
 
-  // whenever current user changes, we manually copy it to ref
+  // whenever all users changes, we manually copy it to ref (including yourself)
   useEffect(() => {
     currentUserRef.current = currentUser;
-  }, [currentUser]);
-
-  // whenever all users changes, we manually copy it to ref
-  useEffect(() => {
     usersRef.current = users;
-  }, [users]);
+  }, [users, currentUser]);
 
   useEffect(() => {
     let id: number;
@@ -458,6 +455,16 @@ const Arena = () => {
 
   //   return () => clearTimeout(t);
   // }, [currentUser.x, currentUser.y]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      usersRef.current.forEach((u) => {
+        if (isNear(currentUserRef.current, u)) console.log("You are near");
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     containerRef.current?.focus();
