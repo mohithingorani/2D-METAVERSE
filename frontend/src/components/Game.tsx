@@ -24,14 +24,7 @@ const Arena = () => {
   const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
   const [params, setParams] = useState({ token: "", spaceId: "" });
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
-  const [logs, setLogs] = useState<string[]>([
-    "asdf",
-    "asdfasdf",
-    "asfasdf",
-    "afasdf",
-    "asdfsadf",
-    "asfasdf",
-  ]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   type Direction = "up" | "down" | "left" | "right";
   type AnimState = "idle" | "walk";
@@ -406,7 +399,6 @@ const Arena = () => {
     if (bg) {
       ctx.drawImage(bg, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     }
-
 
     if (currentUser.x !== undefined) {
       const anim = animationsRef.current;
