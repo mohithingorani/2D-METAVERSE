@@ -1,10 +1,10 @@
-/** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        pixel: ['"Pixelify Sans"', 'sans-serif'],
+        pixel: ['"Pixelify Sans"', "sans-serif"],
+        google: ["Google Sans", "sans-serif"],
       },
     },
   },

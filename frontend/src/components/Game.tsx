@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { lerp } from "../utility/lerp";
-import { clamp } from "../utility/clamp";
-import { isNear } from "../utility/distance";
+import { lerp } from "../utils/lerp";
+import { clamp } from "../utils/clamp";
+import { isNear } from "../utils/distance";
 import { ChatBox } from "./Chatbox";
 import { ClickToStart } from "./ClickToStart";
 
@@ -478,7 +478,7 @@ const Arena = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // throttling, rate limittin - limiting how fast movement can happen
     // allow movement only once every 16ms
-    if(!hasStarted) return;
+    if (!hasStarted) return;
     if (activeChatUserId) return;
 
     const now = Date.now();
@@ -554,12 +554,12 @@ const Arena = () => {
   const [activeChatUserId, setActiveChatUserId] = useState<string | null>(null);
 
   useEffect(() => {
-  if (hasStarted) {
-    requestAnimationFrame(() => {
-      containerRef.current?.focus();
-    });
-  }
-}, [hasStarted]);
+    if (hasStarted) {
+      requestAnimationFrame(() => {
+        containerRef.current?.focus();
+      });
+    }
+  }, [hasStarted]);
   useEffect(() => {
     const onKeyUp = () => {
       isMovingRef.current = false;
@@ -635,7 +635,7 @@ const Arena = () => {
               >
                 {activeChatUserId === user.userId && (
                   <ChatBox
-                  val={message}
+                    val={message}
                     selfUserId={currentUserRef.current.userId}
                     userId={user.userId}
                     messages={chatMessages}
