@@ -1,23 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import bg2 from "../assets/bg2.jpg";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Loader } from "./Loader";
 export default function Signup() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
   async function signup() {
+    if (!username.trim() || !password) return;
     setLoading(true);
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-    const signup = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
-      username,
-      password,
-      type: "user",
-    });
-    
-    return signup;
+    try {
+      const signup = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+        username,
+        password,
+        type: "user",
+      });
+
+      if (signup.status == 200) {
+        localStorage.setItem("token", signup.data.token);
+        navigate("/home");
+        return;
+      } else {
+        console.log("Error signing up");
+      }
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+    }
   }
+
 
   return (
     <div className="grid grid-cols-4">
@@ -33,14 +47,14 @@ export default function Signup() {
               Create your account
             </div>
             <div className="mb-3">
-              <div className="text-sm">Email</div>
+              <div className="text-sm">Username</div>
               <input
                 onChange={(e) => {
                   setUsername(e.target.value);
                 }}
                 type="text"
                 className="w-full px-4 py-2 shadow-md rounded-lg outline-none border border-gray-400/30 mt-1"
-                placeholder="name@email.com"
+                placeholder="hexnova"
               />
             </div>
             <div>

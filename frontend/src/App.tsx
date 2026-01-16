@@ -4,10 +4,12 @@ import Signup from "./components/Signup";
 import Signin from "./components/Signin";
 import Home from "./components/Home";
 import Landing from "./components/Landing";
+import Redirect from "./components/Redirect";
 function App() {
   return (
     <>
       <Routes>
+        <Route path="/" element={<Redirect/>}/>
         <Route path="/game" element={<Arena />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
