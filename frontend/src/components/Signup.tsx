@@ -65,20 +65,22 @@ export default function Signup() {
               />
             </div>
             <div className="pt-6 flex justify-center">
-              <button className="bg-[#303030] w-full py-2 text-white rounded-lg font-medium">
+              <button className="bg-[#303030] w-full hover:bg-white transition duration-300 hover:delay-75 border-2 border-transparent hover:text-[#303030] hover:border-2 hover:border-[#303030] py-2 text-white rounded-lg font-medium">
                 Create account
               </button>
             </div>
-            <div className="flex justify-center pt-4 text-sm font-medium text-gray-500">
-              <div>Already have an account?</div>
+            <div className="flex justify-center pt-4  text-center">
+              <button className="text-sm font-medium text-gray-500 hover:text-black">Already have an account?</button>
             </div>
           </div>
         </div>
       </div>
+      <div className="col-span-2 h-screen p-3">
       <div
-        className="col-span-2 h-screen bg-cover bg-center"
+        className=" h-full bg-cover bg-center rounded-xl "
         style={{ backgroundImage: `url(${cube})` }}
       ></div>
+      </div>
     </div>
   );
 }
