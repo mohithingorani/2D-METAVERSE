@@ -16,7 +16,7 @@ export interface ChatMessage {
 }
 
 const Arena = () => {
-  const canvasRef = useRef<any>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<any>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
   const [users, setUsers] = useState<Map<string, UserInterface>>(new Map());
@@ -86,10 +86,13 @@ const Arena = () => {
 
       // copy currentuser from its ref
       const cu = currentUserRef.current;
-
+      if (cu?.x == null || cu?.y == null) {
+        id = requestAnimationFrame(animate);
+        return;
+      }
       setRenderPos((prev) => ({
-        x: lerp(prev.x, cu.x, 0.25),
-        y: lerp(prev.y, cu.y, 0.25),
+        x: Number.isFinite(cu.x) ? lerp(prev.x, cu.x, 0.25) : prev.x,
+        y: Number.isFinite(cu.y) ? lerp(prev.y, cu.y, 0.25) : prev.y,
       }));
 
       setRenderUsers((prev) => {
@@ -150,24 +153,22 @@ const Arena = () => {
         // Initialize current user position and other users
         console.log("set");
 
-        console.log({
-          x: message.payload.spawn.x,
-          y: message.payload.spawn.y,
-          userId: message.payload.userId,
-        });
-        setCurrentUser({
-          x: message.payload.spawn.x,
-          y: message.payload.spawn.y,
-          userId: message.payload.userId,
-        });
-        setRenderPos({
-          x: message.payload.spawn.x,
-          y: message.payload.spawn.y,
+        const sx = message.payload.spawn.x;
+        const sy = message.payload.spawn.y;
+        const userId = message.payload.userId;
+
+        setCurrentUser({ x: sx, y: sy, userId });
+        setRenderPos({ x: sx, y: sy });
+        requestAnimationFrame(() => {
+          if (!canvasRef.current) return;
+          cameraRef.current.x = sx * TILE_SIZE - canvasRef.current.width / 2;
+          cameraRef.current.y = sy * TILE_SIZE - canvasRef.current.height / 2;
         });
         setLogs((prev) => [...prev.slice(-10), "You joined the space!"]);
 
         // Initialize other users from the payload
         // map stores like this userid:{userId,x,y}
+
         const userMap = new Map();
         const users: UserInterface[] = message.payload.users;
         users.forEach((user: UserInterface) => {
@@ -371,26 +372,23 @@ const Arena = () => {
     if (loading || !animationReady) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const viewWidth = canvas.width;
-    const viewHeight = canvas.height;
+    const targetCamX = renderPos.x * TILE_SIZE - canvas.width / 2;
+    const targetCamY = renderPos.y * TILE_SIZE - canvas.height / 2;
 
-    // center camera on player
-    cameraRef.current.x = renderPos.x * TILE_SIZE - viewWidth / 2;
-    cameraRef.current.y = renderPos.y * TILE_SIZE - viewHeight / 2;
-
-    // clamp camera so it doesn't show outside map
-    cameraRef.current.x = clamp(
+    cameraRef.current.x = lerp(
       cameraRef.current.x,
-      0,
-      WORLD_WIDTH - viewWidth
+      clamp(targetCamX, 0, WORLD_WIDTH - canvas.width),
+      0.2
     );
 
-    cameraRef.current.y = clamp(
+    cameraRef.current.y = lerp(
       cameraRef.current.y,
-      0,
-      WORLD_HEIGHT - viewHeight
+      clamp(targetCamY, 0, WORLD_HEIGHT - canvas.height),
+      0.2
     );
+
     const ctx = canvas.getContext("2d");
+    if(!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
@@ -581,14 +579,9 @@ const Arena = () => {
       closeChat();
     }
   }, [nearbyUsers]);
-  if (
-    loading ||
-    !wsReadyRef.current ||
-    !animationReady ||
-    !currentUserRef.current
-  ) {
-    return <div>loading</div>;
-  }
+ if (loading || !animationReady) {
+  return <div>loading</div>;
+}
 
   return (
     <div className="h-screen w-full text-white bg-gray-900">
@@ -603,73 +596,71 @@ const Arena = () => {
         <div className="mb-4 flex justify-center gap-8 text-2xl">
           {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
           {/* <p className=" text-gray-600">Space ID: {params.spaceId}</p> */}
-          
+
           <p className=" text-white font-google">
-            Connected Users : {users.size + (currentUser ? 1 : 0)}
+            Connected Users : {users.size + (currentUser.x != null ? 1 : 0)}
           </p>
         </div>
-        <div>
-          
-        </div>
+        <div></div>
         <div className="flex justify-center">
-        <div className=" rounded-2xl border-2 relative border-blue-800 shadow-lg shadow-blue-500/50 w-fit overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            width={1080}
-            height={603}
-            className="bg-blue-400"
-          />
-          {nearbyUsers.map((user) => {
-            const screenX = user.x * TILE_SIZE - cameraRef.current.x || 0;
-            const screenY = user.y * TILE_SIZE - cameraRef.current.y || 0;
+          <div className=" rounded-2xl border-2 relative border-blue-800 shadow-lg shadow-blue-500/50 w-fit overflow-hidden">
+            <canvas
+              ref={canvasRef}
+              width={1080}
+              height={603}
+              className="bg-blue-400"
+            />
+            {nearbyUsers.map((user) => {
+              const screenX = user.x * TILE_SIZE - cameraRef.current.x;
+              const screenY = user.y * TILE_SIZE - cameraRef.current.y;
 
-            return (
-              <div
-                key={user.userId}
-                className="absolute"
-                style={{
-                  left: screenX,
-                  top: screenY - 40,
-                  transform: "translate(-50%, -100%)",
-                }}
-              >
-                {activeChatUserId === user.userId && (
-                  <ChatBox
-                    val={message}
-                    selfUserId={currentUserRef.current.userId}
-                    userId={user.userId}
-                    messages={chatMessages}
-                    onChange={(e) => setCurrentMessage(e.target.value)}
-                    onClick={() => {
-                      handleSendMessage(user.userId);
-                    }}
-                    onClose={() => {
-                      closeChat();
-                    }}
-                  />
-                )}
-                {!activeChatUserId && (
-                  <div className="bg-black/80 text-white text-xs px-2 py-1 rounded font-pixel">
-                    Press Enter to chat
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          <div className="absolute text-3xl top-4 left-4 font-pixel px-1 bg-black/40 text-white">
-            XY : {currentUser.x}, {currentUser.y}
-          </div>
-          <div
-            className={`absolute bottom-4 left-4 font-pixel px-2  max-h-10 bg-black/40`}
-          >
-            {logs.slice(-3).map((message: string, key) => {
               return (
-                <div key={key} className=" text-white">
-                  {message}
+                <div
+                  key={user.userId}
+                  className="absolute"
+                  style={{
+                    left: screenX,
+                    top: screenY - 40,
+                    transform: "translate(-50%, -100%)",
+                  }}
+                >
+                  {activeChatUserId === user.userId && (
+                    <ChatBox
+                      val={message}
+                      selfUserId={currentUserRef.current.userId}
+                      userId={user.userId}
+                      messages={chatMessages}
+                      onChange={(e) => setCurrentMessage(e.target.value)}
+                      onClick={() => {
+                        handleSendMessage(user.userId);
+                      }}
+                      onClose={() => {
+                        closeChat();
+                      }}
+                    />
+                  )}
+                  {!activeChatUserId && (
+                    <div className="bg-black/80 text-white text-xs px-2 py-1 rounded font-pixel">
+                      Press Enter to chat
+                    </div>
+                  )}
                 </div>
               );
             })}
-          </div>
+            <div className="absolute text-3xl top-4 left-4 font-pixel px-1 bg-black/40 text-white">
+              XY : {currentUser.x}, {currentUser.y}
+            </div>
+            <div
+              className={`absolute bottom-4 left-4 font-pixel px-2  max-h-10 bg-black/40`}
+            >
+              {logs.slice(-3).map((message: string, key) => {
+                return (
+                  <div key={key} className=" text-white">
+                    {message}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
         <p className="mt-4 flex justify-center   text-sm text-gray-500">

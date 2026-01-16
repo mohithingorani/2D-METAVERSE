@@ -1,6 +1,5 @@
 import { useState } from "react";
 import axios from "axios";
-import game from "../assets/game.avif";
 import cube from "../assets/cube.jpg";
 export default function Signup() {
   const [username, setUsername] = useState<string>("");
