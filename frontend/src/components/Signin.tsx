@@ -3,12 +3,18 @@ import axios from "axios";
 import cube from "../assets/cube.jpg";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader } from "./Loader";
+import { Eye, EyeOff } from "lucide-react";
 export default function Signin() {
   const [username, setUsername] = useState<string>("");
   const navigate = useNavigate();
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
+
+    const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
   async function signin() {
     setLoading(true);
     if (!username.trim() || !password) return;
@@ -60,14 +66,29 @@ export default function Signin() {
               />
             </div>
 
+          
             <div>
               <div className="text-sm">Password</div>
+              <div className="w-full flex justify-between  shadow-md rounded-lg  border border-gray-400/30 mt-1">
               <input
                 onChange={(e) => setPassword(e.target.value)}
-                type="password"
-                className="w-full px-4 py-2 shadow-md rounded-lg outline-none border border-gray-400/30 mt-1"
+                type={`${showPassword ? "text" : "password"}`}
+                className="outline-none px-4 w-full py-2 bg-transparent"
                 placeholder="••••••••"
               />
+              <button
+                onClick={togglePasswordVisibility}
+                style={{
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  marginRight:"10px",
+                  opacity:"70%"
+                }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+              </div>
             </div>
 
             <div className="pt-6 flex justify-center">
