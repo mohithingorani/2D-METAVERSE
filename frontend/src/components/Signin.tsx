@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import cube from "../assets/cube.jpg";
 import { Link, useNavigate } from "react-router-dom";
@@ -36,29 +36,30 @@ export default function Signin() {
     return;
   }
   return (
-    <div className="grid grid-cols-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 min-h-screen">
       {loading && (
-        <div className="absolute bg-white/5 flex w-full h-full justify-center items-center">
+        <div className="fixed inset-0 bg-white/5 flex justify-center items-center z-50">
           <Loader size={40} />
         </div>
       )}
-      <div className="col-span-2 ">
-        <div className="flex h-full justify-center items-center font-google">
-          <div className="px-6 py-4   ">
-            <div className="pb-8 font-normal text-4xl ">
+
+      <div className="col-span-1 md:col-span-2">
+        <div className="flex h-full justify-center items-center font-google px-4">
+          <div className="px-6 py-4 w-full max-w-md">
+            <div className="pb-8 font-normal text-4xl text-center md:text-left">
               Sign in to your account
             </div>
+
             <div className="mb-3">
               <div className="text-sm">Username</div>
               <input
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                }}
+                onChange={(e) => setUsername(e.target.value)}
                 type="text"
                 className="w-full px-4 py-2 shadow-md rounded-lg outline-none border border-gray-400/30 mt-1"
                 placeholder="hexnova"
               />
             </div>
+
             <div>
               <div className="text-sm">Password</div>
               <input
@@ -68,15 +69,17 @@ export default function Signin() {
                 placeholder="••••••••"
               />
             </div>
+
             <div className="pt-6 flex justify-center">
               <button
                 onClick={signin}
-                className="bg-[#303030] w-full hover:bg-white transition duration-300 hover:delay-75 border-2 border-transparent hover:text-[#303030] hover:border-2 hover:border-[#303030] py-2 text-white rounded-lg font-medium"
+                className="bg-[#303030] w-full hover:bg-white transition duration-300 border-2 border-transparent hover:text-[#303030] hover:border-[#303030] py-2 text-white rounded-lg font-medium"
               >
                 Sign in
               </button>
             </div>
-            <div className="flex justify-center pt-4  text-center">
+
+            <div className="flex justify-center pt-4 text-center">
               <Link to={"/signup"}>
                 <button className="text-sm font-medium text-gray-500 hover:text-black">
                   Dont have an account?
@@ -86,11 +89,12 @@ export default function Signin() {
           </div>
         </div>
       </div>
-      <div className="col-span-2 h-screen p-3">
+
+      <div className="hidden md:block col-span-2 h-screen p-3">
         <div
-          className=" h-full bg-cover bg-center rounded-xl "
+          className="h-full bg-cover bg-center rounded-xl"
           style={{ backgroundImage: `url(${cube})` }}
-        ></div>
+        />
       </div>
     </div>
   );
