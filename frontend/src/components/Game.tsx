@@ -600,18 +600,18 @@ const Arena = () => {
         onKeyDown={handleKeyDown}
         tabIndex={0}
       >
-        <h1 className="text-2xl font-bold mb-4 ">Arena</h1>
-        <div className="mb-4">
+        <div className="mb-4 flex justify-center gap-8 text-2xl">
           {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
-          <p className="text-xs text-gray-600">Space ID: {params.spaceId}</p>
-          <p className="text-xs text-gray-600">
-            Loading: {JSON.stringify(loading)}
-          </p>
-          <p className="text-sm text-gray-600">
-            Connected Users: {users.size + (currentUser ? 1 : 0)}
+          {/* <p className=" text-gray-600">Space ID: {params.spaceId}</p> */}
+          
+          <p className=" text-white font-google">
+            Connected Users : {users.size + (currentUser ? 1 : 0)}
           </p>
         </div>
-        <div>Messages:{JSON.stringify(logs)}</div>
+        <div>
+          
+        </div>
+        <div className="flex justify-center">
         <div className=" rounded-2xl border-2 relative border-blue-800 shadow-lg shadow-blue-500/50 w-fit overflow-hidden">
           <canvas
             ref={canvasRef}
@@ -660,9 +660,9 @@ const Arena = () => {
             XY : {currentUser.x}, {currentUser.y}
           </div>
           <div
-            className={`absolute bottom-4 left-4 font-pixel  max-h-10 bg-black/40`}
+            className={`absolute bottom-4 left-4 font-pixel px-2  max-h-10 bg-black/40`}
           >
-            {logs.map((message: string, key) => {
+            {logs.slice(-3).map((message: string, key) => {
               return (
                 <div key={key} className=" text-white">
                   {message}
@@ -670,8 +670,9 @@ const Arena = () => {
               );
             })}
           </div>
+          </div>
         </div>
-        <p className="mt-2  text-sm text-gray-500">
+        <p className="mt-4 flex justify-center   text-sm text-gray-500">
           Use arrow keys to move your avatar
         </p>
       </div>

@@ -9,15 +9,13 @@ export function ClickToStart({ onStart }: { onStart: () => void }) {
       "
     >
       <div className="text-center space-y-4 animate-fadeIn">
-        <h1 className="text-5xl font-pixel text-white tracking-widest drop-shadow-lg">
-          ARENA
-        </h1>
+        
 
         <div
           className="
             inline-block px-8 py-4
             border-2 border-cyan-400
-            text-cyan-300 text-xl font-pixel
+            text-cyan-300 text-xl font-google
             rounded-xl
             shadow-[0_0_20px_rgba(34,211,238,0.6)]
             hover:shadow-[0_0_40px_rgba(34,211,238,1)]
