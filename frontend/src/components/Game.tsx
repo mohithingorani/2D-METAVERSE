@@ -4,6 +4,7 @@ import { clamp } from "../utils/clamp";
 import { isNear } from "../utils/distance";
 import { ChatBox } from "./Chatbox";
 import { ClickToStart } from "./ClickToStart";
+import { BUILDINGS, isBlocked } from "../utils/buildings";
 
 interface UserInterface {
   userId: string;
@@ -23,7 +24,14 @@ const Arena = () => {
   const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
   const [params, setParams] = useState({ token: "", spaceId: "" });
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<string[]>([
+    "asdf",
+    "asdfasdf",
+    "asfasdf",
+    "afasdf",
+    "asdfsadf",
+    "asfasdf",
+  ]);
   const [loading, setLoading] = useState(true);
   type Direction = "up" | "down" | "left" | "right";
   type AnimState = "idle" | "walk";
@@ -272,7 +280,7 @@ const Arena = () => {
   // Handle user movement
   const handleMove = (newX: number, newY: number) => {
     if (!wsRef.current || !wsReadyRef.current) return;
-
+    if (isBlocked(newX, newY)) return;
     newX = clamp(newX, 1, 53);
     newY = clamp(newY, 1, 29);
     setCurrentUser((prev: any) => ({
@@ -388,7 +396,7 @@ const Arena = () => {
     );
 
     const ctx = canvas.getContext("2d");
-    if(!ctx) return
+    if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
@@ -398,6 +406,7 @@ const Arena = () => {
     if (bg) {
       ctx.drawImage(bg, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     }
+
 
     if (currentUser.x !== undefined) {
       const anim = animationsRef.current;
@@ -579,9 +588,9 @@ const Arena = () => {
       closeChat();
     }
   }, [nearbyUsers]);
- if (loading || !animationReady) {
-  return <div>loading</div>;
-}
+  if (loading || !animationReady) {
+    return <div>loading</div>;
+  }
 
   return (
     <div className="h-screen w-full text-white bg-gray-900">
@@ -651,15 +660,14 @@ const Arena = () => {
               XY : {currentUser.x}, {currentUser.y}
             </div>
             <div
-              className={`absolute bottom-4 left-4 font-pixel px-2  max-h-10 bg-black/40`}
+              className="absolute bottom-4 left-4 font-pixel px-2 max-h-24 bg-black/40
+             flex flex-col-reverse overflow-hidden"
             >
-              {logs.slice(-3).map((message: string, key) => {
-                return (
-                  <div key={key} className=" text-white">
-                    {message}
-                  </div>
-                );
-              })}
+              {logs.slice(-5).map((message, key) => (
+                <div key={key} className="text-white text-xs log-animate">
+                  {message}
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -23,7 +23,7 @@ export default function Signup() {
 
       if (signup.status == 200) {
         localStorage.setItem("token", signup.data.token);
-        navigate("/home");
+        navigate("/game");
         return;
       } else {
         console.log("Error signing up");

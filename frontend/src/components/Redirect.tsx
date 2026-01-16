@@ -11,7 +11,7 @@ export default function Redirect(){
             navigate("/signup");
         }
         else{
-            navigate("/home");
+            navigate("/game");
         }
     },[])
     return <></>

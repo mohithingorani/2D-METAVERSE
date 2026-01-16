@@ -30,7 +30,7 @@ export default function Signin() {
       if (signin.status == 200) {
         setLoading(false);
         localStorage.setItem("token", signin.data.token);
-        navigate("/home");
+        navigate("/game");
       } else {
         console.log("error signing in");
         setLoading(false);

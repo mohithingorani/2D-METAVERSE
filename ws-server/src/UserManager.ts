@@ -4,6 +4,7 @@ import axios from "axios";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RoomManager } from "./RoomManager";
 import { timeStamp } from "node:console";
+import { isBlocked } from "./utils";
 
 dotenv.config();
 function generateRandomString(num: number) {
@@ -153,7 +154,7 @@ export class User {
           if (
             isInside &&
             ((xDisplacement == 1 && yDisplacement == 0) ||
-              (xDisplacement == 0 && yDisplacement == 1))
+              (xDisplacement == 0 && yDisplacement == 1)) && !isBlocked(moveX,moveY)
           ) {
             this.x = moveX;
             this.y = moveY;
