@@ -143,11 +143,10 @@ const Arena = () => {
 
   // Initialize WebSocket connection and handle URL params
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    // const urlParams = new URLSearchParams(window.location.search);
     const token = localStorage.getItem("token");
-    const spaceId = urlParams.get("spaceId") || "";
+    const spaceId = "muj"
     token && setParams({ token, spaceId });
-
     // Initialize WebSocket
     wsRef.current = new WebSocket("ws://localhost:8080");
 
