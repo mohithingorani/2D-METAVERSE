@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { lerp } from "../utils/lerp";
 import { clamp } from "../utils/clamp";
 import { isNear } from "../utils/distance";
 import { ChatBox } from "./Chatbox";
 import { ClickToStart } from "./ClickToStart";
-import { BUILDINGS, isBlocked } from "../utils/buildings";
+import { isBlocked } from "../utils/buildings";
+import { Loader } from "./Loader";
 
 interface UserInterface {
   userId: string;
@@ -23,6 +24,8 @@ const Arena = () => {
   const [users, setUsers] = useState<Map<string, UserInterface>>(new Map());
   const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
   const [params, setParams] = useState({ token: "", spaceId: "" });
+  const walkSoundRef = useRef<HTMLAudioElement | null>(null);
+  const musicSoundRef = useRef<HTMLAudioElement | null>(null);
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,9 +39,10 @@ const Arena = () => {
   const [animationReady, setAnimationReady] = useState(false);
   const [message, setCurrentMessage] = useState<string>("");
   const [chatMessages, setChatMessages] = useState<Map<string, ChatMessage[]>>(
-    new Map()
+    new Map(),
   );
-
+  const lastMoveRef = useRef(0);
+  const MOVE_DELAY = 120;
   const containerRef = useRef<HTMLDivElement>(null);
   const bgImgRef = useRef<HTMLImageElement | null>(null);
   const spriteRef = useRef<HTMLImageElement | null>(null);
@@ -57,6 +61,25 @@ const Arena = () => {
     const img = new Image();
     img.src = "/map-final.png";
     bgImgRef.current = img;
+  }, []);
+
+  useEffect(() => {
+    // footsteps
+    const walk = new Audio("/sounds/running.mp3");
+    walk.loop = true;
+    walk.volume = 0.4;
+    walkSoundRef.current = walk;
+
+    // background music
+    const music = new Audio("/sounds/music.mp3");
+    music.loop = true;
+    music.volume = 0.1;
+    musicSoundRef.current = music;
+
+    return () => {
+      walk.pause();
+      music.pause();
+    };
   }, []);
 
   const currentUserRef = useRef(currentUser);
@@ -135,7 +158,7 @@ const Arena = () => {
         JSON.stringify({
           type: "join",
           payload: { spaceId, token },
-        })
+        }),
       );
     };
 
@@ -249,7 +272,7 @@ const Arena = () => {
       JSON.stringify({
         type: "chat",
         payload: { message },
-      })
+      }),
     );
 
     setChatMessages((prev) => {
@@ -272,6 +295,9 @@ const Arena = () => {
 
   // Handle user movement
   const handleMove = (newX: number, newY: number) => {
+    const now = performance.now();
+    if (now - lastMoveRef.current < MOVE_DELAY) return;
+    lastMoveRef.current = now;
     if (!wsRef.current || !wsReadyRef.current) return;
     if (isBlocked(newX, newY)) return;
     newX = clamp(newX, 1, 53);
@@ -294,7 +320,7 @@ const Arena = () => {
           y: newY,
           userId: currentUser.userId,
         },
-      })
+      }),
     );
   };
 
@@ -379,13 +405,13 @@ const Arena = () => {
     cameraRef.current.x = lerp(
       cameraRef.current.x,
       clamp(targetCamX, 0, WORLD_WIDTH - canvas.width),
-      0.2
+      0.2,
     );
 
     cameraRef.current.y = lerp(
       cameraRef.current.y,
       clamp(targetCamY, 0, WORLD_HEIGHT - canvas.height),
-      0.2
+      0.2,
     );
 
     const ctx = canvas.getContext("2d");
@@ -422,16 +448,16 @@ const Arena = () => {
         renderPos.x * scale - SIZE / 2,
         renderPos.y * scale - SIZE / 2,
         SIZE,
-        SIZE
+        SIZE,
       );
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = "#fff";
       ctx.font = "14px Arial";
       ctx.textAlign = "center";
 
       ctx.fillText(
         "You",
         renderPos.x * TILE_SIZE,
-        renderPos.y * TILE_SIZE - SIZE / 2 - 10
+        renderPos.y * TILE_SIZE - SIZE / 2 - 10,
       );
     }
 
@@ -453,7 +479,7 @@ const Arena = () => {
         user.x * TILE_SIZE - SIZE / 2,
         user.y * TILE_SIZE - SIZE / 2,
         SIZE,
-        SIZE
+        SIZE,
       );
       ctx.fillStyle = "#000";
       ctx.textAlign = "center";
@@ -461,8 +487,6 @@ const Arena = () => {
     });
     ctx.restore();
   }, [renderUsers, renderPos]);
-
-  const lastMove = useRef(0);
 
   const closeChat = () => {
     setActiveChatUserId(null);
@@ -472,6 +496,7 @@ const Arena = () => {
 
   const startGame = () => {
     setHasStarted(true);
+    musicSoundRef.current?.play().catch(() => {});
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -479,10 +504,6 @@ const Arena = () => {
     // allow movement only once every 16ms
     if (!hasStarted) return;
     if (activeChatUserId) return;
-
-    const now = Date.now();
-    if (now - lastMove.current < 100) return;
-    lastMove.current = now;
 
     const { x, y } = currentUser;
     if (x === undefined) return;
@@ -492,6 +513,9 @@ const Arena = () => {
         isMovingRef.current = true;
         directionRef.current = "up";
         animStateRef.current = "walk";
+        if (walkSoundRef.current?.paused) {
+          walkSoundRef.current.play().catch(() => {});
+        }
         handleMove(x, y - 1);
         break;
 
@@ -499,6 +523,9 @@ const Arena = () => {
         isMovingRef.current = true;
         directionRef.current = "down";
         animStateRef.current = "walk";
+        if (walkSoundRef.current?.paused) {
+          walkSoundRef.current.play().catch(() => {});
+        }
         handleMove(x, y + 1);
         break;
 
@@ -506,6 +533,9 @@ const Arena = () => {
         isMovingRef.current = true;
         directionRef.current = "left";
         animStateRef.current = "walk";
+        if (walkSoundRef.current?.paused) {
+          walkSoundRef.current.play().catch(() => {});
+        }
         handleMove(x - 1, y);
         break;
 
@@ -513,6 +543,9 @@ const Arena = () => {
         isMovingRef.current = true;
         directionRef.current = "right";
         animStateRef.current = "walk";
+        if (walkSoundRef.current?.paused) {
+          walkSoundRef.current.play().catch(() => {});
+        }
         handleMove(x + 1, y);
         break;
 
@@ -524,30 +557,9 @@ const Arena = () => {
       }
     }
   };
-  // useEffect(() => {
-  //   const t = setTimeout(() => {
-  //     animStateRef.current = "idle";
-  //     frameIndexRef.current = 0;
-  //   }, 120);
 
-  //   return () => clearTimeout(t);
-  // }, [currentUser.x, currentUser.y]);
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     usersRef.current.forEach((u) => {
-  //       if (isNear(currentUserRef.current, u)) {
-  //         console.log("You are near");
-  //         const screenX = currentUserRef.current.x * TILE_SIZE - cameraRef.current.x;
-  //   const screenY = currentUserRef.cu.y * TILE_SIZE - cameraRef.current.y;
-  //       }
-  //     });
-  //   }, 2000);
-
-  //   return () => clearInterval(interval);
-  // }, []);
   const nearbyUsers = Array.from(renderUsers.values()).filter(
-    (u) => currentUser?.x && isNear(currentUser, u)
+    (u) => currentUser?.x && isNear(currentUser, u),
   );
 
   const [activeChatUserId, setActiveChatUserId] = useState<string | null>(null);
@@ -559,15 +571,13 @@ const Arena = () => {
       });
     }
   }, [hasStarted]);
-  useEffect(() => {
-    const onKeyUp = () => {
-      isMovingRef.current = false;
-      animStateRef.current = "idle";
-      frameIndexRef.current = 0;
-    };
+  const onKeyUp = useCallback(() => {
+    isMovingRef.current = false;
+    animStateRef.current = "idle";
+    frameIndexRef.current = 0;
 
-    window.addEventListener("keyup", onKeyUp);
-    return () => window.removeEventListener("keyup", onKeyUp);
+    walkSoundRef.current?.pause();
+    if (walkSoundRef.current) walkSoundRef.current.currentTime = 0;
   }, []);
 
   // if user2 walks away, bring back focus
@@ -581,7 +591,11 @@ const Arena = () => {
     }
   }, [nearbyUsers]);
   if (loading || !animationReady) {
-    return <div>loading</div>;
+    return (
+      <div className="fixed inset-0 bg-white/5 flex justify-center items-center z-50">
+        <Loader size={40} />
+      </div>
+    );
   }
 
   return (
@@ -592,6 +606,7 @@ const Arena = () => {
         className="p-8 outline-none"
         ref={containerRef}
         onKeyDown={handleKeyDown}
+        onKeyUp={onKeyUp}
         tabIndex={0}
       >
         <div className="mb-4 flex justify-center gap-8 text-2xl">
