@@ -6,6 +6,7 @@ import { ChatBox } from "./Chatbox";
 import { ClickToStart } from "./ClickToStart";
 import { isBlocked } from "../utils/buildings";
 import { Loader } from "./Loader";
+import { DesktopOnly } from "./DesktopOnly";
 
 interface UserInterface {
   userId: string;
@@ -51,6 +52,11 @@ const Arena = () => {
   const WORLD_HEIGHT = 30 * TILE_SIZE;
   const cameraRef = useRef({ x: 0, y: 0 });
 
+  const isMobile =
+  window.matchMedia("(pointer: coarse)").matches &&
+  window.innerWidth < 768;
+
+  
   useEffect(() => {
     const img = new Image();
     img.src = "/still/still_01.png"; // put sprite in public/
@@ -145,7 +151,7 @@ const Arena = () => {
   useEffect(() => {
     // const urlParams = new URLSearchParams(window.location.search);
     const token = localStorage.getItem("token");
-    const spaceId = "muj"
+    const spaceId = "muj";
     token && setParams({ token, spaceId });
     // Initialize WebSocket
     wsRef.current = new WebSocket("ws://localhost:8080");
@@ -589,6 +595,10 @@ const Arena = () => {
       closeChat();
     }
   }, [nearbyUsers]);
+
+  if (isMobile) {
+  return <DesktopOnly />;
+}
   if (loading || !animationReady) {
     return (
       <div className="fixed inset-0 bg-white/5 flex justify-center items-center z-50">
@@ -598,26 +608,18 @@ const Arena = () => {
   }
 
   return (
-    <div className="h-screen w-full text-white bg-gray-900">
+    <div className="h-screen w-full    text-white flex flex-col justify-center  bg-gray-900">
       {!hasStarted && <ClickToStart onStart={startGame} />}
       {/* rest of arena */}
       <div
-        className="p-8 outline-none"
+        className="p-2 outline-none"
         ref={containerRef}
         onKeyDown={handleKeyDown}
         onKeyUp={onKeyUp}
         tabIndex={0}
       >
-        <div className="mb-4 flex justify-center gap-8 text-2xl">
-          {/* <p className="text-sm text-gray-600">Token: {params.token}</p> */}
-          {/* <p className=" text-gray-600">Space ID: {params.spaceId}</p> */}
-
-          <p className=" text-white font-google">
-            Connected Users : {users.size + (currentUser.x != null ? 1 : 0)}
-          </p>
-        </div>
-        <div></div>
-        <div className="flex justify-center">
+        
+        <div className="flex justify-around ">
           <div className=" rounded-2xl border-2 relative border-blue-800 shadow-lg shadow-blue-500/50 w-fit overflow-hidden">
             <canvas
               ref={canvasRef}
@@ -674,6 +676,11 @@ const Arena = () => {
                   {message}
                 </div>
               ))}
+            </div>
+          </div>
+          <div className="flex justify-center  text-center">
+            <div className=" text-white font-google">
+              Connected Users : {users.size + (currentUser.x != null ? 1 : 0)}
             </div>
           </div>
         </div>

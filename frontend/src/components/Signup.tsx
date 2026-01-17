@@ -49,9 +49,9 @@ export default function Signup() {
 
       if (signup.status == 200) {
         sucessNotify(signup.data.message);
-        setLoading(false);
         await delay(2000);
         localStorage.setItem("token", signup.data.token);
+        setLoading(false);
         navigate("/game");
         return;
       } else {
