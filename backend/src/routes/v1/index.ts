@@ -40,7 +40,7 @@ router.post("/signup", async (req, res) => {
     );
 
     res.status(200).json({
-      message: "User created successfully",
+      message: "Account Created",
       token
     });
   } catch (err) {
