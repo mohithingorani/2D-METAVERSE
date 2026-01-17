@@ -5,6 +5,7 @@ import Signin from "./components/Signin";
 import Home from "./components/Home";
 import Landing from "./components/Landing";
 import Redirect from "./components/Redirect";
+import { NotFound } from "./components/404";
 function App() {
   return (
     <>
@@ -15,6 +16,7 @@ function App() {
         <Route path="/signin" element={<Signin />} />
         <Route path="/home" element={<Home />} />
         <Route path="/landing" element={<Landing />} />
+        <Route path="*" element={<NotFound/>}/>
       </Routes>
     </>
   );

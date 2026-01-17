@@ -24,7 +24,6 @@ const Arena = () => {
   const [currentUser, setCurrentUser] = useState<any>({});
   const [users, setUsers] = useState<Map<string, UserInterface>>(new Map());
   const [renderUsers, setRenderUsers] = useState<Map<string, any>>(new Map());
-  const [params, setParams] = useState({ token: "", spaceId: "" });
   const walkSoundRef = useRef<HTMLAudioElement | null>(null);
   const musicSoundRef = useRef<HTMLAudioElement | null>(null);
   const [renderPos, setRenderPos] = useState({ x: 0, y: 0 });
@@ -152,7 +151,6 @@ const Arena = () => {
     // const urlParams = new URLSearchParams(window.location.search);
     const token = localStorage.getItem("token");
     const spaceId = "muj";
-    token && setParams({ token, spaceId });
     // Initialize WebSocket
     wsRef.current = new WebSocket("ws://localhost:8080");
 
