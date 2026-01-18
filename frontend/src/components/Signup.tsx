@@ -3,7 +3,7 @@ import axios from "axios";
 import bg2 from "../assets/bg2.jpg";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader } from "./Loader";
-import { Eye, EyeOff,CircleUserIcon } from "lucide-react";
+import { Eye, EyeOff} from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import { delay } from "../utils/delay";
 export default function Signup() {
