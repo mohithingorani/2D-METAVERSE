@@ -52,6 +52,7 @@ const Arena = () => {
   const WORLD_WIDTH = 54 * TILE_SIZE;
   const WORLD_HEIGHT = 30 * TILE_SIZE;
   const cameraRef = useRef({ x: 0, y: 0 });
+    const WS_URL = import.meta.env.VITE_WS_URL;
 
   const isMobile =
     window.matchMedia("(pointer: coarse)").matches && window.innerWidth < 768;
@@ -153,7 +154,7 @@ const Arena = () => {
     const token = localStorage.getItem("token");
     const spaceId = "muj";
     // Initialize WebSocket
-    wsRef.current = new WebSocket("ws://localhost:8080");
+    wsRef.current = new WebSocket(WS_URL);
 
     wsRef.current.onopen = () => {
       wsReadyRef.current = true;
