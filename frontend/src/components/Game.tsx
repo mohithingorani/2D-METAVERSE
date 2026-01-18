@@ -7,11 +7,13 @@ import { ClickToStart } from "./ClickToStart";
 import { isBlocked } from "../utils/buildings";
 import { Loader } from "./Loader";
 import { DesktopOnly } from "./DesktopOnly";
+import { NavBar } from "./NavBar";
 
 interface UserInterface {
   userId: string;
   x: number;
   y: number;
+  username: string;
 }
 export interface ChatMessage {
   userId: string;
@@ -52,10 +54,8 @@ const Arena = () => {
   const cameraRef = useRef({ x: 0, y: 0 });
 
   const isMobile =
-  window.matchMedia("(pointer: coarse)").matches &&
-  window.innerWidth < 768;
+    window.matchMedia("(pointer: coarse)").matches && window.innerWidth < 768;
 
-  
   useEffect(() => {
     const img = new Image();
     img.src = "/still/still_01.png"; // put sprite in public/
@@ -133,6 +133,7 @@ const Arena = () => {
             userId: user.userId,
             x: lerp(p.x, user.x, 0.25),
             y: lerp(p.y, user.y, 0.25),
+            username: user.username,
           });
         });
 
@@ -183,7 +184,7 @@ const Arena = () => {
         const sx = message.payload.spawn.x;
         const sy = message.payload.spawn.y;
         const userId = message.payload.userId;
-
+        const username = message.payload.username;
         setCurrentUser({ x: sx, y: sy, userId });
         setRenderPos({ x: sx, y: sy });
         requestAnimationFrame(() => {
@@ -211,6 +212,7 @@ const Arena = () => {
             x: message.payload.x,
             y: message.payload.y,
             userId: message.payload.userId,
+            username: message.payload.username,
           });
           return newUsers;
         });
@@ -226,6 +228,7 @@ const Arena = () => {
             userId: message.payload.userId,
             x: message.payload.x,
             y: message.payload.y,
+            username: message.payload.username,
           });
           return next;
         });
@@ -484,9 +487,13 @@ const Arena = () => {
         SIZE,
         SIZE,
       );
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = "#fff";
       ctx.textAlign = "center";
-      ctx.fillText(`User ${user.userId}`, user.x * scale, user.y * scale - 24);
+      ctx.fillText(
+        user.username || "",
+        user.x * TILE_SIZE,
+        user.y * TILE_SIZE - SIZE / 2 - 10,
+      );
     });
     ctx.restore();
   }, [renderUsers, renderPos]);
@@ -595,8 +602,8 @@ const Arena = () => {
   }, [nearbyUsers]);
 
   if (isMobile) {
-  return <DesktopOnly />;
-}
+    return <DesktopOnly />;
+  }
   if (loading || !animationReady) {
     return (
       <div className="fixed inset-0 bg-white/5 flex justify-center items-center z-50">
@@ -609,6 +616,10 @@ const Arena = () => {
     <div className="h-screen w-full    text-white flex flex-col justify-center  bg-gray-900">
       {!hasStarted && <ClickToStart onStart={startGame} />}
       {/* rest of arena */}
+
+      <div className="absolute w-full top-0 ">
+        <NavBar username={currentUser.username} />
+      </div>
       <div
         className="p-2 outline-none"
         ref={containerRef}
@@ -616,7 +627,6 @@ const Arena = () => {
         onKeyUp={onKeyUp}
         tabIndex={0}
       >
-        
         <div className="flex justify-around ">
           <div className=" rounded-2xl border-2 relative border-blue-800 shadow-lg shadow-blue-500/50 w-fit overflow-hidden">
             <canvas
@@ -677,7 +687,7 @@ const Arena = () => {
             </div>
           </div>
           <div className="flex justify-center  text-center">
-            <div className=" text-white font-google">
+            <div className=" text-gray-400 font-google">
               Connected Users : {users.size + (currentUser.x != null ? 1 : 0)}
             </div>
           </div>

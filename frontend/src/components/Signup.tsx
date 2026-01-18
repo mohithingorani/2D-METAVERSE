@@ -3,10 +3,9 @@ import axios from "axios";
 import bg2 from "../assets/bg2.jpg";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader } from "./Loader";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff,CircleUserIcon } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import { delay } from "../utils/delay";
-
 export default function Signup() {
   const [username, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState<string | null>(null);
@@ -78,6 +77,7 @@ export default function Signup() {
       <div className="absolute">
         <ToastContainer />
       </div>
+      
       {loading && (
         <div className="fixed inset-0 bg-white/5 flex justify-center items-center z-50">
           <Loader size={40} />

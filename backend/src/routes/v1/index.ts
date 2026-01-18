@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { spaceRouter } from "./space";
 import { adminRouter } from "./admin";
 import { wsRouter } from "./ws";
+import { userMiddleware } from "../../middlewares/user";
 
 
 
@@ -93,6 +94,33 @@ router.post("/signin", async (req, res) => {
     });
   }
 });
+
+router.post("/getUserName",userMiddleware,async(req,res)=>{
+  const userId = req.userId;
+  try{
+    const user = await prisma.user.findFirst({
+      where:{
+        id:userId
+      }
+    })
+    if(!user){
+      res.status(400).json({
+        error:"User does not exit"
+      })
+      return;
+    }
+    res.json({
+      username:user.username
+    })
+  }catch(err){
+    console.log(err);
+    res.status(500).json({
+      message:"Internal Server Error",
+      error:err
+    })
+  }
+
+})
 
 router.use("/space",spaceRouter);
 router.use("/admin",adminRouter);

@@ -27,6 +27,7 @@ export class User {
   private x: number;
   private y: number;
   private spaceId?: string;
+  private username?:string;
 
   constructor(ws: WebSocket) {
     this.id = generateRandomString(10);
@@ -53,6 +54,17 @@ export class User {
           try {
             const decoded = jwt.verify(token, JWT_PASSWORD) as JwtPayload;
             this.userId = decoded.userId;
+            const username = await axios.post<{username:string}>(`${BACKEND_URL}/api/v1/getUserName`,{
+              userId:this.userId
+            },
+            {
+              headers:{
+                Authorization:`Bearer ${token}`
+              }
+            }
+          )
+          if(!username) return;
+            this.username = username.data.username;
             console.log("JWT OK:", decoded);
           } catch (e) {
             console.log("JWT FAILED", e);
@@ -71,6 +83,7 @@ export class User {
             type: "space-joined",
             payload: {
               userId: this.userId,
+              username:this.username,
               spawn: {
                 x: this.x,
                 y: this.y,
@@ -83,6 +96,7 @@ export class User {
                     userId: u.userId,
                     x: u.x,
                     y: u.y,
+                    username:u.username
                   })) || [],
             },
           });
@@ -93,6 +107,7 @@ export class User {
               type: "user-joined",
               payload: {
                 userId: this.userId,
+                username:this.username,
                 x: this.x,
                 y: this.y,
               },
@@ -165,6 +180,7 @@ export class User {
                   userId: this.userId,
                   x: this.x,
                   y: this.y,
+                  username:this.username
                 },
               },
               this,

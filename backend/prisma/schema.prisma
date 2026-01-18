@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -14,10 +8,10 @@ datasource db {
 }
 
 model User {
-  id       String  @id @unique @default(cuid())
   username String  @unique
   password String
   avatarId String?
+  id       String  @id @unique @default(cuid())
   role     Role
   spaces   Space[]
   avatar   Avatar? @relation(fields: [avatarId], references: [id])
@@ -29,7 +23,7 @@ model Space {
   width     Int
   height    Int
   thumbnail String?
-  creatorId String  
+  creatorId String
   creator   User           @relation(fields: [creatorId], references: [id])
   elements  SpaceElement[]
 }
@@ -40,8 +34,8 @@ model SpaceElement {
   spaceId   String
   x         Int
   y         Int
-  space     Space   @relation(fields: [spaceId], references: [id])
   element   Element @relation(fields: [elementId], references: [id])
+  space     Space   @relation(fields: [spaceId], references: [id])
 }
 
 model Element {
@@ -50,8 +44,8 @@ model Element {
   height      Int
   static      Boolean
   imageUrl    String
-  spaces      SpaceElement[]
   mapElements MapElements[]
+  spaces      SpaceElement[]
 }
 
 model Map {
@@ -69,8 +63,8 @@ model MapElements {
   elementId String
   x         Int?
   y         Int?
-  map       Map     @relation(fields: [mapId], references: [id])
   element   Element @relation(fields: [elementId], references: [id])
+  map       Map     @relation(fields: [mapId], references: [id])
 }
 
 model Avatar {
