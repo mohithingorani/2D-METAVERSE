@@ -2,8 +2,8 @@ services:
   backend:
     build: ./backend
     container_name: backend
-    expose:
-      - "3000"
+    ports:
+      - "3018:3000"
     env_file:
       - ./backend/.env
     restart: unless-stopped
@@ -11,8 +11,8 @@ services:
   ws-server:
     build: ./ws-server
     container_name: ws-server
-    expose:
-      - "8080"
+    ports:
+      - "8083:8080"
     environment:
       BACKEND_URL: http://backend:3000
       JWT_PASSWORD: ${JWT_PASSWORD}
