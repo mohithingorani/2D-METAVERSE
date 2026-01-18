@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node dist/index.js",
-    "build": "tsc -b"
+    "build": "tsc "
   },
   "keywords": [],
   "author": "",
@@ -17,12 +17,11 @@
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
-    "tsc": "^2.0.4",
-    "typescript": "^5.9.3",
     "ws": "^8.19.0"
   },
   "devDependencies": {
     "@types/axios": "^0.9.36",
-    "@types/node": "^25.0.8"
+    "@types/node": "^25.0.8",
+    "typescript": "^5.9.3"
   }
 }

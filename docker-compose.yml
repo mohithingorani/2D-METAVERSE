@@ -23,6 +23,6 @@ services:
   frontend:
     build: ./frontend
     container_name: frontend
-    expose:
-      - "4173"
+    ports:
+      - "4173:4173"
     restart: unless-stopped
