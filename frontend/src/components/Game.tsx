@@ -185,7 +185,7 @@ const Arena = () => {
         const sy = message.payload.spawn.y;
         const userId = message.payload.userId;
         const username = message.payload.username;
-        setCurrentUser({ x: sx, y: sy, userId });
+        setCurrentUser({ x: sx, y: sy, userId,username });
         setRenderPos({ x: sx, y: sy });
         requestAnimationFrame(() => {
           if (!canvasRef.current) return;
@@ -616,6 +616,7 @@ const Arena = () => {
     <div className="h-screen w-full    text-white flex flex-col justify-center  bg-gray-900">
       {!hasStarted && <ClickToStart onStart={startGame} />}
       {/* rest of arena */}
+
 
       <div className="absolute w-full top-0 ">
         <NavBar username={currentUser.username} />
