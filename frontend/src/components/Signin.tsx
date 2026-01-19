@@ -84,8 +84,8 @@ export default function Signin() {
       )}
 
       <div className="col-span-1 md:col-span-2">
-        <div className="flex h-full justify-center items-center font-google px-4">
-          <div className="px-6 py-4 w-full max-w-md">
+        <div className="flex h-full justify-center items-center font-google px-4 bg-slate-100 md:bg-white">
+          <div className="px-6 py-16 border border-black shadow-md border-1 bg-white rounded-md md:border-0 md:shadow-none w-full max-w-md">
             <div className="pb-8 text-4xl text-center md:text-left">
               Sign in to your account
             </div>
